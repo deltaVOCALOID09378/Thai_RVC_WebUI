@@ -38,31 +38,29 @@ class VC:
 
         to_return_protect0 = {
             "visible": self.if_f0 != 0,
-            "value": (
-                to_return_protect[0] if self.if_f0 != 0 and to_return_protect else 0.5
-            ),
+            "value": to_return_protect[0]
+            if self.if_f0 != 0 and to_return_protect
+            else 0.5,
             "__type__": "update",
         }
         to_return_protect1 = {
             "visible": self.if_f0 != 0,
-            "value": (
-                to_return_protect[1] if self.if_f0 != 0 and to_return_protect else 0.33
-            ),
+            "value": to_return_protect[1]
+            if self.if_f0 != 0 and to_return_protect
+            else 0.33,
             "__type__": "update",
         }
 
         if sid == "" or sid == []:
-            if (
-                self.hubert_model is not None
-            ):  # 考虑到轮询, 需要加个判断看是否 sid 是由有模型切换到无模型的
+            if self.hubert_model is not None:
                 logger.info("Clean model cache")
-                del (self.net_g, self.n_spk, self.hubert_model, self.tgt_sr)  # ,cpt
-                self.hubert_model = self.net_g = self.n_spk = self.hubert_model = (
-                    self.tgt_sr
-                ) = None
+                del (self.net_g, self.n_spk, self.hubert_model, self.tgt_sr)
+                self.hubert_model = (
+                    self.net_g
+                ) = self.n_spk = self.hubert_model = self.tgt_sr = None
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-                ###楼下不这么折腾清理不干净
+                
                 self.if_f0 = self.cpt.get("f0", 1)
                 self.version = self.cpt.get("version", "v1")
                 if self.version == "v1":
@@ -183,7 +181,7 @@ class VC:
             elif file_index2:
                 file_index = file_index2
             else:
-                file_index = ""  # 防止小白写错，自动帮他替换掉
+                file_index = "" 
 
             audio_opt = self.pipeline.pipeline(
                 self.hubert_model,
@@ -205,10 +203,20 @@ class VC:
                 protect,
                 f0_file,
             )
+            
             if self.tgt_sr != resample_sr >= 16000:
                 tgt_sr = resample_sr
             else:
                 tgt_sr = self.tgt_sr
+
+            # --- บังคับความยาวไฟล์ให้เท่ากับต้นฉบับเป๊ะๆ ---
+            target_len = int(len(audio) * (tgt_sr / 16000))
+            if len(audio_opt) > target_len:
+                audio_opt = audio_opt[:target_len]
+            elif len(audio_opt) < target_len:
+                audio_opt = np.pad(audio_opt, (0, target_len - len(audio_opt)))
+            # -----------------------------------------------
+
             index_info = (
                 "Index:\n%s." % file_index
                 if os.path.exists(file_index)
@@ -244,7 +252,7 @@ class VC:
         try:
             dir_path = (
                 dir_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
-            )  # 防止小白拷路径头尾带了空格和"和回车
+            ) 
             opt_root = opt_root.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
             os.makedirs(opt_root, exist_ok=True)
             try:
@@ -259,6 +267,16 @@ class VC:
                 paths = [path.name for path in paths]
             infos = []
             for path in paths:
+                
+                # --- เช็คและข้ามไฟล์ที่มีอยู่แล้ว ---
+                out_filename = "%s.%s" % (os.path.basename(path), format1)
+                out_path = os.path.join(opt_root, out_filename)
+                if os.path.exists(out_path):
+                    infos.append("%s -> Skipped (File already exists)" % (os.path.basename(path)))
+                    yield "\n".join(infos)
+                    continue
+                # ----------------------------------
+
                 info, opt = self.vc_single(
                     sid,
                     path,
@@ -267,7 +285,6 @@ class VC:
                     f0_method,
                     file_index,
                     file_index2,
-                    # file_big_npy,
                     index_rate,
                     filter_radius,
                     resample_sr,
@@ -279,21 +296,15 @@ class VC:
                         tgt_sr, audio_opt = opt
                         if format1 in ["wav", "flac"]:
                             sf.write(
-                                "%s/%s.%s"
-                                % (opt_root, os.path.basename(path), format1),
+                                out_path,
                                 audio_opt,
                                 tgt_sr,
                             )
                         else:
-                            path = "%s/%s.%s" % (
-                                opt_root,
-                                os.path.basename(path),
-                                format1,
-                            )
                             with BytesIO() as wavf:
                                 sf.write(wavf, audio_opt, tgt_sr, format="wav")
                                 wavf.seek(0, 0)
-                                with open(path, "wb") as outf:
+                                with open(out_path, "wb") as outf:
                                     wav2(wavf, outf, format1)
                     except:
                         info += traceback.format_exc()
