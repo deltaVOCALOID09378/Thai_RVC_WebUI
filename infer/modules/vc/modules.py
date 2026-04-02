@@ -43,12 +43,16 @@ class VC:
 
         to_return_protect0 = {
             "visible": self.if_f0 != 0,
-            "value": to_return_protect[0] if self.if_f0 != 0 and to_return_protect else 0.5,
+            "value": (
+                to_return_protect[0] if self.if_f0 != 0 and to_return_protect else 0.5
+            ),
             "__type__": "update",
         }
         to_return_protect1 = {
             "visible": self.if_f0 != 0,
-            "value": to_return_protect[1] if self.if_f0 != 0 and to_return_protect else 0.33,
+            "value": (
+                to_return_protect[1] if self.if_f0 != 0 and to_return_protect else 0.33
+            ),
             "__type__": "update",
         }
 
@@ -63,12 +67,16 @@ class VC:
                 self.version = self.cpt.get("version", "v1")
                 if self.version == "v1":
                     if self.if_f0 == 1:
-                        self.net_g = SynthesizerTrnMs256NSFsid(*self.cpt["config"], is_half=self.config.is_half)
+                        self.net_g = SynthesizerTrnMs256NSFsid(
+                            *self.cpt["config"], is_half=self.config.is_half
+                        )
                     else:
                         self.net_g = SynthesizerTrnMs256NSFsid_nono(*self.cpt["config"])
                 elif self.version == "v2":
                     if self.if_f0 == 1:
-                        self.net_g = SynthesizerTrnMs768NSFsid(*self.cpt["config"], is_half=self.config.is_half)
+                        self.net_g = SynthesizerTrnMs768NSFsid(
+                            *self.cpt["config"], is_half=self.config.is_half
+                        )
                     else:
                         self.net_g = SynthesizerTrnMs768NSFsid_nono(*self.cpt["config"])
                 del self.net_g, self.cpt
@@ -81,7 +89,7 @@ class VC:
                 "",
                 "",
             )
-        
+
         person = f'{os.getenv("weight_root")}/{sid}'
         logger.info(f"Loading: {person}")
 
@@ -98,7 +106,9 @@ class VC:
             ("v2", 0): SynthesizerTrnMs768NSFsid_nono,
         }
 
-        self.net_g = synthesizer_class.get((self.version, self.if_f0), SynthesizerTrnMs256NSFsid)(*self.cpt["config"], is_half=self.config.is_half)
+        self.net_g = synthesizer_class.get(
+            (self.version, self.if_f0), SynthesizerTrnMs256NSFsid
+        )(*self.cpt["config"], is_half=self.config.is_half)
         del self.net_g.enc_q
 
         self.net_g.load_state_dict(self.cpt["weight"], strict=False)
@@ -125,26 +135,68 @@ class VC:
             else {"visible": True, "maximum": n_spk, "__type__": "update"}
         )
 
-    def vc_single(self, sid, input_audio_path, f0_up_key, f0_file, f0_method, file_index, file_index2, index_rate, filter_radius, resample_sr, rms_mix_rate, protect):
-        if input_audio_path is None: return "You need to upload an audio", None
+    def vc_single(
+        self,
+        sid,
+        input_audio_path,
+        f0_up_key,
+        f0_file,
+        f0_method,
+        file_index,
+        file_index2,
+        index_rate,
+        filter_radius,
+        resample_sr,
+        rms_mix_rate,
+        protect,
+    ):
+        if input_audio_path is None:
+            return "You need to upload an audio", None
         f0_up_key = int(f0_up_key)
         try:
             audio = load_audio(input_audio_path, 16000)
             audio_max = np.abs(audio).max() / 0.95
-            if audio_max > 1: audio /= audio_max
+            if audio_max > 1:
+                audio /= audio_max
             times = [0, 0, 0]
 
             if self.hubert_model is None:
                 self.hubert_model = load_hubert(self.config)
 
             if file_index:
-                file_index = file_index.strip(" ").strip('"').strip("\n").strip('"').strip(" ").replace("trained", "added")
+                file_index = (
+                    file_index.strip(" ")
+                    .strip('"')
+                    .strip("\n")
+                    .strip('"')
+                    .strip(" ")
+                    .replace("trained", "added")
+                )
             elif file_index2:
                 file_index = file_index2
             else:
                 file_index = ""
 
-            audio_opt = self.pipeline.pipeline(self.hubert_model, self.net_g, sid, audio, input_audio_path, times, f0_up_key, f0_method, file_index, index_rate, self.if_f0, filter_radius, self.tgt_sr, resample_sr, rms_mix_rate, self.version, protect, f0_file)
+            audio_opt = self.pipeline.pipeline(
+                self.hubert_model,
+                self.net_g,
+                sid,
+                audio,
+                input_audio_path,
+                times,
+                f0_up_key,
+                f0_method,
+                file_index,
+                index_rate,
+                self.if_f0,
+                filter_radius,
+                self.tgt_sr,
+                resample_sr,
+                rms_mix_rate,
+                self.version,
+                protect,
+                f0_file,
+            )
 
             if self.tgt_sr != resample_sr >= 16000:
                 tgt_sr = resample_sr
@@ -156,48 +208,82 @@ class VC:
                 audio_opt = audio_opt[:expected_length]
             elif len(audio_opt) < expected_length:
                 pad_length = expected_length - len(audio_opt)
-                audio_opt = np.pad(audio_opt, (0, pad_length), mode='constant')
+                audio_opt = np.pad(audio_opt, (0, pad_length), mode="constant")
 
-            index_info = "Index:\n%s." % file_index if os.path.exists(file_index) else "Index not used."
-            return ("Success.\n%s\nTime:\nnpy: %.2fs, f0: %.2fs, infer: %.2fs." % (index_info, *times), (tgt_sr, audio_opt))
+            index_info = (
+                "Index:\n%s." % file_index
+                if os.path.exists(file_index)
+                else "Index not used."
+            )
+            return (
+                "Success.\n%s\nTime:\nnpy: %.2fs, f0: %.2fs, infer: %.2fs."
+                % (index_info, *times),
+                (tgt_sr, audio_opt),
+            )
         except:
             info = traceback.format_exc()
             logger.warning(info)
             return info, (None, None)
 
-    def vc_multi(self, sid, dir_path, opt_root, paths, f0_up_key, f0_method, file_index, file_index2, index_rate, filter_radius, resample_sr, rms_mix_rate, protect, format1):
+    def vc_multi(
+        self,
+        sid,
+        dir_path,
+        opt_root,
+        paths,
+        f0_up_key,
+        f0_method,
+        file_index,
+        file_index2,
+        index_rate,
+        filter_radius,
+        resample_sr,
+        rms_mix_rate,
+        protect,
+        format1,
+    ):
         self.cancel_batch = False  # รีเซ็ตสถานะก่อนเริ่มงานใหม่ทุกครั้ง
         try:
             dir_path = dir_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
             opt_root = opt_root.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
             os.makedirs(opt_root, exist_ok=True)
-            
+
             try:
                 if dir_path != "":
-                    input_paths = [os.path.join(dir_path, name) for name in os.listdir(dir_path)]
+                    input_paths = [
+                        os.path.join(dir_path, name) for name in os.listdir(dir_path)
+                    ]
                 else:
                     input_paths = [path.name for path in paths]
             except:
                 traceback.print_exc()
                 input_paths = [path.name for path in paths]
-            
-            audio_paths = [p for p in input_paths if p.lower().endswith(('.wav', '.mp3', '.flac', '.ogg', '.m4a'))]
+
+            audio_paths = [
+                p
+                for p in input_paths
+                if p.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".m4a"))
+            ]
             if not audio_paths:
                 yield "❌ ไม่พบไฟล์เสียงที่รองรับในโฟลเดอร์นำเข้า (No valid audio files found)."
                 return
-            
-            file_statuses = {os.path.basename(p): "⏳ รอดำเนินการ (Pending)" for p in audio_paths}
-            
+
+            file_statuses = {
+                os.path.basename(p): "⏳ รอดำเนินการ (Pending)" for p in audio_paths
+            }
+
             def generate_report():
-                report = "📊 รายงานสถานะจากโฟลเดอร์ Import โดยตรง (Live Status Report):\n"
-                report += "="*65 + "\n"
+                report = (
+                    "📊 รายงานสถานะจากโฟลเดอร์ Import โดยตรง (Live Status Report):\n"
+                )
+                report += "=" * 65 + "\n"
                 for f_name, status in file_statuses.items():
                     report += f"🎵 {f_name} : {status}\n"
-                report += "="*65
+                report += "=" * 65
                 return report
 
             yield generate_report()
-            
+
             for path in audio_paths:
                 # ----------------- เช็คเบรกฉุกเฉิน -----------------
                 if self.cancel_batch:
@@ -207,18 +293,33 @@ class VC:
 
                 filename = os.path.basename(path)
                 name_without_ext = os.path.splitext(filename)[0]
-                expected_out_path = os.path.join(opt_root, f"{name_without_ext}.{format1}")
-                
+                expected_out_path = os.path.join(
+                    opt_root, f"{name_without_ext}.{format1}"
+                )
+
                 if os.path.exists(expected_out_path):
                     file_statuses[filename] = "⏭️ ข้าม (Already Exists)"
                     yield generate_report()
                     continue
-                
+
                 file_statuses[filename] = "🔄 กำลังเรนเดอร์ (Processing...)"
                 yield generate_report()
-                
-                info, opt = self.vc_single(sid, path, f0_up_key, None, f0_method, file_index, file_index2, index_rate, filter_radius, resample_sr, rms_mix_rate, protect)
-                
+
+                info, opt = self.vc_single(
+                    sid,
+                    path,
+                    f0_up_key,
+                    None,
+                    f0_method,
+                    file_index,
+                    file_index2,
+                    index_rate,
+                    filter_radius,
+                    resample_sr,
+                    rms_mix_rate,
+                    protect,
+                )
+
                 if "Success" in info:
                     try:
                         tgt_sr, audio_opt = opt
@@ -236,9 +337,9 @@ class VC:
                         traceback.print_exc()
                 else:
                     file_statuses[filename] = "❌ ล้มเหลว (Inference Error)"
-                
+
                 yield generate_report()
-            
+
             if not self.cancel_batch:
                 yield generate_report() + f"\n🎉 ดำเนินการเสร็จสมบูรณ์ 100%! (All Processed)\n📁 ไฟล์ถูกบันทึกที่: {opt_root}"
 
