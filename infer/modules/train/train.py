@@ -99,16 +99,15 @@ def main():
         n_gpus = 1
     if n_gpus < 1:
         # patch to unblock people without gpus. there is probably a better way.
-        print("NO GPU DETECTED: falling back to CPU - this may take a while")
+        print("[System Warning] ไม่พบการ์ดจอ Nvidia: ระบบกำลังสลับไปใช้ CPU ซึ่งอาจใช้เวลาฝึกสอนนานกว่าปกติ (NO NVIDIA GPU DETECTED: falling back to CPU - this may take a while)")
         n_gpus = 1
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = str(randint(20000, 55555))
     children = []
-    logger = utils.get_logger(hps.model_dir)
     for i in range(n_gpus):
         subproc = mp.Process(
             target=run,
-            args=(i, n_gpus, hps, logger),
+            args=(i, n_gpus, hps),
         )
         children.append(subproc)
         subproc.start()
@@ -117,10 +116,14 @@ def main():
         children[i].join()
 
 
-def run(rank, n_gpus, hps, logger: logging.Logger):
+def run(
+    rank,
+    n_gpus,
+    hps,
+):
     global global_step
     if rank == 0:
-        # logger = utils.get_logger(hps.model_dir)
+        logger = utils.get_logger(hps.model_dir)
         logger.info(hps)
         # utils.check_git_hash(hps.model_dir)
         writer = SummaryWriter(log_dir=hps.model_dir)
@@ -210,7 +213,7 @@ def run(rank, n_gpus, hps, logger: logging.Logger):
             utils.latest_checkpoint_path(hps.model_dir, "D_*.pth"), net_d, optim_d
         )  # D多半加载没事
         if rank == 0:
-            logger.info("loaded D")
+            logger.info("[Checkpoint] โหลดโมเดล D สำเร็จ (Loaded D)")
         # _, _, _, epoch_str = utils.load_checkpoint(utils.latest_checkpoint_path(hps.model_dir, "G_*.pth"), net_g, optim_g,load_opt=0)
         _, _, _, epoch_str = utils.load_checkpoint(
             utils.latest_checkpoint_path(hps.model_dir, "G_*.pth"), net_g, optim_g
@@ -224,7 +227,7 @@ def run(rank, n_gpus, hps, logger: logging.Logger):
         global_step = 0
         if hps.pretrainG != "":
             if rank == 0:
-                logger.info("loaded pretrained %s" % (hps.pretrainG))
+                logger.info("[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s" % (hps.pretrainG))
             if hasattr(net_g, "module"):
                 logger.info(
                     net_g.module.load_state_dict(
@@ -239,7 +242,7 @@ def run(rank, n_gpus, hps, logger: logging.Logger):
                 )  ##测试不加载优化器
         if hps.pretrainD != "":
             if rank == 0:
-                logger.info("loaded pretrained %s" % (hps.pretrainD))
+                logger.info("[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s" % (hps.pretrainD))
             if hasattr(net_d, "module"):
                 logger.info(
                     net_d.module.load_state_dict(
@@ -503,7 +506,7 @@ def train_and_evaluate(
             if global_step % hps.train.log_interval == 0:
                 lr = optim_g.param_groups[0]["lr"]
                 logger.info(
-                    "Train Epoch: {} [{:.0f}%]".format(
+                    "รอบฝึกสอน (Train Epoch): {} [{:.0f}%]".format(
                         epoch, 100.0 * batch_idx / len(train_loader)
                     )
                 )
@@ -598,7 +601,7 @@ def train_and_evaluate(
             else:
                 ckpt = net_g.state_dict()
             logger.info(
-                "saving ckpt %s_e%s:%s"
+                "[Save] กำลังบันทึกจุดตรวจสอบ (Saving ckpt) %s_e%s:%s"
                 % (
                     hps.name,
                     epoch,
@@ -615,16 +618,16 @@ def train_and_evaluate(
             )
 
     if rank == 0:
-        logger.info("====> Epoch: {} {}".format(epoch, epoch_recorder.record()))
+        logger.info("====> รอบฝึกสอน (Epoch): {} {}".format(epoch, epoch_recorder.record()))
     if epoch >= hps.total_epoch and rank == 0:
-        logger.info("Training is done. The program is closed.")
+        logger.info("🎉 การฝึกสอนเสร็จสมบูรณ์ ระบบกำลังปิดตัวลง (Training is done. The program is closed.)")
 
         if hasattr(net_g, "module"):
             ckpt = net_g.module.state_dict()
         else:
             ckpt = net_g.state_dict()
         logger.info(
-            "saving final ckpt:%s"
+            "[Save] กำลังบันทึกจุดตรวจสอบสุดท้าย (Saving final ckpt):%s"
             % (
                 savee(
                     ckpt, hps.sample_rate, hps.if_f0, hps.name, epoch, hps.version, hps
