@@ -99,7 +99,9 @@ def main():
         n_gpus = 1
     if n_gpus < 1:
         # patch to unblock people without gpus. there is probably a better way.
-        print("[System Warning] ไม่พบการ์ดจอ Nvidia: ระบบกำลังสลับไปใช้ CPU ซึ่งอาจใช้เวลาฝึกสอนนานกว่าปกติ (NO NVIDIA GPU DETECTED: falling back to CPU - this may take a while)")
+        print(
+            "[System Warning] ไม่พบการ์ดจอ Nvidia: ระบบกำลังสลับไปใช้ CPU ซึ่งอาจใช้เวลาฝึกสอนนานกว่าปกติ (NO NVIDIA GPU DETECTED: falling back to CPU - this may take a while)"
+        )
         n_gpus = 1
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = str(randint(20000, 55555))
@@ -227,7 +229,10 @@ def run(
         global_step = 0
         if hps.pretrainG != "":
             if rank == 0:
-                logger.info("[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s" % (hps.pretrainG))
+                logger.info(
+                    "[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s"
+                    % (hps.pretrainG)
+                )
             if hasattr(net_g, "module"):
                 logger.info(
                     net_g.module.load_state_dict(
@@ -242,7 +247,10 @@ def run(
                 )  ##测试不加载优化器
         if hps.pretrainD != "":
             if rank == 0:
-                logger.info("[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s" % (hps.pretrainD))
+                logger.info(
+                    "[Pretrain] โหลดโมเดลพื้นฐาน (Loaded pretrained): %s"
+                    % (hps.pretrainD)
+                )
             if hasattr(net_d, "module"):
                 logger.info(
                     net_d.module.load_state_dict(
@@ -618,9 +626,13 @@ def train_and_evaluate(
             )
 
     if rank == 0:
-        logger.info("====> รอบฝึกสอน (Epoch): {} {}".format(epoch, epoch_recorder.record()))
+        logger.info(
+            "====> รอบฝึกสอน (Epoch): {} {}".format(epoch, epoch_recorder.record())
+        )
     if epoch >= hps.total_epoch and rank == 0:
-        logger.info("🎉 การฝึกสอนเสร็จสมบูรณ์ ระบบกำลังปิดตัวลง (Training is done. The program is closed.)")
+        logger.info(
+            "🎉 การฝึกสอนเสร็จสมบูรณ์ ระบบกำลังปิดตัวลง (Training is done. The program is closed.)"
+        )
 
         if hasattr(net_g, "module"):
             ckpt = net_g.module.state_dict()
