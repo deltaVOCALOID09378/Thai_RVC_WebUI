@@ -1,102 +1,110 @@
-faiss tuning TIPS
+เคล็ดลับการปรับแต่ง faiss
 ==================
-# about faiss
-faiss is a library of neighborhood searches for dense vectors, developed by facebook research, which efficiently implements many approximate neighborhood search methods.
-Approximate Neighbor Search finds similar vectors quickly while sacrificing some accuracy.
+# เกี่ยวกับ faiss
+faiss คือไลบรารีสำหรับการค้นหาเพื่อนบ้านสำหรับเวกเตอร์หนาแน่น พัฒนาโดยฝ่ายวิจัยของ Facebook ซึ่งนำวิธีการค้นหาเพื่อนบ้านโดยประมาณมาใช้ได้อย่างมีประสิทธิภาพ
+การค้นหาเพื่อนบ้านโดยประมาณจะค้นหาเวกเตอร์ที่คล้ายกันได้อย่างรวดเร็วโดยแลกกับความแม่นยำที่ลดลง
 
-## faiss in RVC
-In RVC, for the embedding of features converted by HuBERT, we search for embeddings similar to the embedding generated from the training data and mix them to achieve a conversion that is closer to the original speech. However, since this search takes time if performed naively, high-speed conversion is realized by using approximate neighborhood search.
+## faiss ใน RVC
+ใน RVC สำหรับการฝังคุณลักษณะที่แปลงโดย HuBERT เราจะค้นหาการฝังที่คล้ายกับการฝังที่สร้างจากข้อมูลการฝึกอบรมและผสมผสานกันเพื่อให้ได้การแปลงที่ใกล้เคียงกับเสียงพูดต้นฉบับมากขึ้น อย่างไรก็ตาม เนื่องจากการค้นหานี้ใช้เวลานานหากทำอย่างง่ายๆ การแปลงความเร็วสูงจึงเกิดขึ้นได้โดยใช้การค้นหาเพื่อนบ้านโดยประมาณ
 
-# implementation overview
-In '/logs/your-experiment/3_feature256' where the model is located, features extracted by HuBERT from each voice data are located.
-From here we read the npy files in order sorted by filename and concatenate the vectors to create big_npy. (This vector has shape [N, 256].)
-After saving big_npy as /logs/your-experiment/total_fea.npy, train it with faiss.
+# ภาพรวมการใช้งาน
+ใน '/logs/your-experiment/3_feature256' ซึ่งเป็นที่ตั้งของโมเดล จะมีคุณลักษณะที่สกัดโดย HuBERT จากข้อมูลเสียงแต่ละชุดอยู่
 
-In this article, I will explain the meaning of these parameters.
+จากตรงนี้ เราจะอ่านไฟล์ npy ตามลำดับที่เรียงตามชื่อไฟล์ และรวมเวกเตอร์เข้าด้วยกันเพื่อสร้าง big_npy (เวกเตอร์นี้มีรูปร่าง [N, 256])
+หลังจากบันทึก big_npy เป็น /logs/your-experiment/total_fea.npy แล้ว ให้ฝึกฝนด้วย faiss
 
-# Explanation of the method
-## index factory
-An index factory is a unique faiss notation that expresses a pipeline that connects multiple approximate neighborhood search methods as a string.
-This allows you to try various approximate neighborhood search methods simply by changing the index factory string.
-In RVC it is used like this:
+ในบทความนี้ ผมจะอธิบายความหมายของพารามิเตอร์เหล่านี้
+
+# คำอธิบายวิธีการ
+## โรงงานสร้างดัชนี (Index Factory)
+โรงงานสร้างดัชนีเป็นสัญกรณ์ faiss เฉพาะที่แสดงถึงไปป์ไลน์ที่เชื่อมต่อวิธีการค้นหาบริเวณใกล้เคียงโดยประมาณหลายวิธีเข้าด้วยกันในรูปแบบสตริง
+
+ซึ่งช่วยให้คุณสามารถลองใช้วิธีการค้นหาบริเวณใกล้เคียงโดยประมาณต่างๆ ได้ง่ายๆ เพียงแค่เปลี่ยนสตริงของโรงงานสร้างดัชนี
+
+ใน RVC จะใช้แบบนี้:
 
 ```python
 index = faiss.index_factory(256, "IVF%s,Flat" % n_ivf)
 ```
-Among the arguments of index_factory, the first is the number of dimensions of the vector, the second is the index factory string, and the third is the distance to use.
+อาร์กิวเมนต์ของ index_factory นั้น ตัวแรกคือจำนวนมิติของเวกเตอร์ ตัวที่สองคือสตริงของ index factory และตัวที่สามคือระยะทางที่จะใช้
 
-For more detailed notation
+สำหรับรายละเอียดเพิ่มเติม
 https://github.com/facebookresearch/faiss/wiki/The-index-factory
 
-## index for distance
-There are two typical indexes used as similarity of embedding as follows.
+## ดัชนีสำหรับระยะทาง
+มีดัชนีสองแบบที่ใช้กันทั่วไปในการวัดความคล้ายคลึงของการฝังข้อมูล ดังนี้
 
-- Euclidean distance (METRIC_L2)
-- inner product (METRIC_INNER_PRODUCT)
+- ระยะทางแบบยุคลิด (METRIC_L2)
+- ผลคูณภายใน (METRIC_INNER_PRODUCT)
 
-Euclidean distance takes the squared difference in each dimension, sums the differences in all dimensions, and then takes the square root. This is the same as the distance in 2D and 3D that we use on a daily basis.
-The inner product is not used as an index of similarity as it is, and the cosine similarity that takes the inner product after being normalized by the L2 norm is generally used.
+ระยะทางแบบยุคลิดจะคำนวณผลต่างกำลังสองในแต่ละมิติ รวมผลต่างทั้งหมดในทุกมิติ แล้วจึงหาค่ารากที่สอง ซึ่งเหมือนกับระยะทางใน 2 มิติและ 3 มิติที่เราใช้กันในชีวิตประจำวัน
 
-Which is better depends on the case, but cosine similarity is often used in embedding obtained by word2vec and similar image retrieval models learned by ArcFace. If you want to do l2 normalization on vector X with numpy, you can do it with the following code with eps small enough to avoid 0 division.
+โดยทั่วไปแล้วจะไม่นำผลคูณภายในมาใช้เป็นดัชนีความคล้ายคลึงโดยตรง แต่จะใช้ความคล้ายคลึงแบบโคไซน์ซึ่งคำนวณผลคูณภายในหลังจากปรับค่าให้เป็นมาตรฐานด้วยค่า L2 แทน
+
+การใช้แบบใดดีกว่านั้นขึ้นอยู่กับกรณี แต่ความคล้ายคลึงแบบโคไซน์มักถูกใช้ในการฝังข้อมูลที่ได้จาก word2vec และโมเดลการค้นหารูปภาพที่คล้ายกันซึ่งเรียนรู้โดย ArcFace หากคุณต้องการปรับค่าเวกเตอร์ X ให้เป็นมาตรฐานด้วย L2 โดยใช้ numpy คุณสามารถทำได้ด้วยโค้ดต่อไปนี้ โดยใช้ค่า eps ที่เล็กพอที่จะหลีกเลี่ยงการหารด้วย 0
 
 ```python
 X_normed = X / np.maximum(eps, np.linalg.norm(X, ord=2, axis=-1, keepdims=True))
 ```
 
-Also, for the index factory, you can change the distance index used for calculation by choosing the value to pass as the third argument.
+นอกจากนี้ สำหรับโรงงานดัชนี คุณสามารถเปลี่ยนดัชนีระยะทางที่ใช้ในการคำนวณได้โดยเลือกค่าที่จะส่งเป็นอาร์กิวเมนต์ที่สาม
+
 
 ```python
 index = faiss.index_factory(dimention, text, faiss.METRIC_INNER_PRODUCT)
 ```
 
 ## IVF
-IVF (Inverted file indexes) is an algorithm similar to the inverted index in full-text search.
-During learning, the search target is clustered with kmeans, and Voronoi partitioning is performed using the cluster center. Each data point is assigned a cluster, so we create a dictionary that looks up the data points from the clusters.
+IVF (Inverted file indexes) เป็นอัลกอริทึมที่คล้ายกับดัชนีผกผันในการค้นหาข้อความเต็ม
+ในระหว่างการเรียนรู้ เป้าหมายการค้นหาจะถูกจัดกลุ่มด้วย kmeans และจะทำการแบ่งพาร์ติชัน Voronoi โดยใช้จุดศูนย์กลางของกลุ่ม แต่ละจุดข้อมูลจะถูกกำหนดกลุ่ม ดังนั้นเราจึงสร้างพจนานุกรมที่ค้นหาจุดข้อมูลจากกลุ่มต่างๆ
 
-For example, if clusters are assigned as follows
-|index|Cluster|
+ตัวอย่างเช่น หากกำหนดกลุ่มดังนี้
+|ดัชนี|กลุ่ม|
+
 |-----|-------|
+
 |1|A|
+
 |2|B|
+
 |3|A|
+
 |4|C|
+
 |5|B|
 
-The resulting inverted index looks like this:
+ดัชนีผกผันที่ได้จะมีลักษณะดังนี้:
 
-|cluster|index|
+|กลุ่ม|ดัชนี|
+
 |-------|-----|
+
 |A|1, 3|
+
 |B|2, 5|
+
 |C|4|
 
-When searching, we first search n_probe clusters from the clusters, and then calculate the distances for the data points belonging to each cluster.
+ในการค้นหา เราจะค้นหาคลัสเตอร์ n_probe จากคลัสเตอร์ก่อน จากนั้นจึงคำนวณระยะห่างระหว่างจุดข้อมูลที่อยู่ในแต่ละคลัสเตอร์
 
-# recommend parameter
-There are official guidelines on how to choose an index, so I will explain accordingly.
+# แนะนำพารามิเตอร์
+มีแนวทางอย่างเป็นทางการเกี่ยวกับการเลือกดัชนี ดังนั้นฉันจะอธิบายตามนั้น
+
 https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index
 
-For datasets below 1M, 4bit-PQ is the most efficient method available in faiss as of April 2023.
-Combining this with IVF, narrowing down the candidates with 4bit-PQ, and finally recalculating the distance with an accurate index can be described by using the following index factory.
+สำหรับชุดข้อมูลที่มีขนาดต่ำกว่า 1 ล้านข้อมูล 4bit-PQ เป็นวิธีที่มีประสิทธิภาพที่สุดใน faiss ณ เดือนเมษายน 2023
+การรวมวิธีนี้กับ IVF การจำกัดตัวเลือกด้วย 4bit-PQ และสุดท้ายการคำนวณระยะห่างใหม่ด้วยดัชนีที่แม่นยำ สามารถอธิบายได้โดยใช้โรงงานดัชนีต่อไปนี้
 
 ```python
 index = faiss.index_factory(256, "IVF1024,PQ128x4fs,RFlat")
 ```
 
-## Recommended parameters for IVF
-Consider the case of too many IVFs. For example, if coarse quantization by IVF is performed for the number of data, this is the same as a naive exhaustive search and is inefficient.
-For 1M or less, IVF values are recommended between 4*sqrt(N) ~ 16*sqrt(N) for N number of data points.
+## พารามิเตอร์ที่แนะนำสำหรับ IVF
+พิจารณากรณีที่มี IVF มากเกินไป ตัวอย่างเช่น หากทำการควอนไทเซชันแบบหยาบโดยใช้ IVF สำหรับจำนวนข้อมูล จะเหมือนกับการค้นหาแบบครบถ้วนแบบง่ายๆ ซึ่งไม่มีประสิทธิภาพ
+สำหรับข้อมูล 1 ล้านจุดหรือน้อยกว่านั้น แนะนำให้ใช้ค่า IVF ระหว่าง 4*sqrt(N) ~ 16*sqrt(N) สำหรับจำนวนจุดข้อมูล N
 
-Since the calculation time increases in proportion to the number of n_probes, please consult with the accuracy and choose appropriately. Personally, I don't think RVC needs that much accuracy, so n_probe = 1 is fine.
+เนื่องจากเวลาในการคำนวณจะเพิ่มขึ้นตามสัดส่วนของจำนวน n_probes โปรดปรึกษาเรื่องความแม่นยำและเลือกค่าให้เหมาะสม โดยส่วนตัวแล้ว ผมคิดว่า RVC ไม่ต้องการความแม่นยำมากขนาดนั้น ดังนั้น n_probe = 1 ก็เพียงพอแล้ว
 
 ## FastScan
-FastScan is a method that enables high-speed approximation of distances by Cartesian product quantization by performing them in registers.
-Cartesian product quantization performs clustering independently for each d dimension (usually d = 2) during learning, calculates the distance between clusters in advance, and creates a lookup table. At the time of prediction, the distance of each dimension can be calculated in O(1) by looking at the lookup table.
-So the number you specify after PQ usually specifies half the dimension of the vector.
-
-For a more detailed description of FastScan, please refer to the official documentation.
-https://github.com/facebookresearch/faiss/wiki/Fast-accumulation-of-PQ-and-AQ-codes-(FastScan)
-
-## RFlat
-RFlat is an instruction to recalculate the rough distance calculated by FastScan with the exact distance specified by the third argument of index factory.
-When getting k neighbors, k*k_factor points are recalculated.
+FastScan เป็นวิธีการที่ช่วยให้สามารถประมาณระยะทางด้วยความเร็วสูงโดยใช้การหาปริมาณผลคูณคาร์ทีเซียนโดยดำเนินการในรีจิสเตอร์
+การหาปริมาณผลคูณคาร์ทีเซียนจะทำการจัดกลุ่มอย่างอิสระสำหรับ
