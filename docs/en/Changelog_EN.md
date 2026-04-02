@@ -1,105 +1,84 @@
 ### 2023-10-06
-- We have created a GUI for real-time voice change: go-realtime-gui.bat/gui_v1.py (Note that you should choose the same type of input and output device, e.g. MME and MME).
-- We trained a better pitch extract RMVPE model.
-- Optimize inference GUI layout.
+- เราได้สร้าง GUI สำหรับการเปลี่ยนเสียงแบบเรียลไทม์: go-realtime-gui.bat/gui_v1.py (โปรดทราบว่าคุณควรเลือกอุปกรณ์อินพุตและเอาต์พุตประเภทเดียวกัน เช่น MME และ MME)
+
+- เราได้ฝึกฝนโมเดล RMVPE สำหรับการแยกเสียงสูงต่ำให้ดีขึ้น
+
+- ปรับปรุงเค้าโครง GUI สำหรับการอนุมานให้เหมาะสมยิ่งขึ้น
 
 ### 2023-08-13
-1-Regular bug fix
-- Change the minimum total epoch number to 1, and change the minimum total epoch number to 2
-- Fix training errors of not using pre-train models
-- After accompaniment vocals separation, clear graphics memory
-- Change faiss save path absolute path to relative path
-- Support path containing spaces (both training set path and experiment name are supported, and errors will no longer be reported)
-- Filelist cancels mandatory utf8 encoding
-- Solve the CPU consumption problem caused by faiss searching during real-time voice changes
+1-แก้ไขข้อบกพร่องทั่วไป
+- เปลี่ยนจำนวนรอบการฝึกขั้นต่ำเป็น 1 และเปลี่ยนจำนวนรอบการฝึกขั้นต่ำเป็น 2
+- แก้ไขข้อผิดพลาดในการฝึกที่ไม่ใช้โมเดลที่ฝึกไว้ล่วงหน้า
+- ล้างหน่วยความจำกราฟิกหลังจากแยกเสียงร้องประกอบ
+- เปลี่ยนเส้นทางการบันทึกของ faiss จากเส้นทางสัมบูรณ์เป็นเส้นทางสัมพัทธ์
+- รองรับเส้นทางที่มีช่องว่าง (รองรับทั้งเส้นทางชุดฝึกและชื่อการทดลอง และจะไม่รายงานข้อผิดพลาดอีกต่อไป)
+- ยกเลิกการเข้ารหัส utf8 ที่บังคับในรายการไฟล์
+- แก้ปัญหาการใช้ CPU ที่เกิดจากการค้นหา faiss ระหว่างการเปลี่ยนเสียงแบบเรียลไทม์
 
-2-Key updates
-- Train the current strongest open-source vocal pitch extraction model RMVPE, and use it for RVC training, offline/real-time inference, supporting PyTorch/Onnx/DirectML
-- Support for AMD and Intel graphics cards through Pytorch_DML
+2-การอัปเดตที่สำคัญ
+- ฝึกโมเดลการแยกเสียงร้องแบบโอเพนซอร์สที่แข็งแกร่งที่สุดในปัจจุบัน RMVPE และใช้สำหรับการฝึก RVC การอนุมานแบบออฟไลน์/เรียลไทม์ รองรับ PyTorch/Onnx/DirectML
+- รองรับการ์ดกราฟิก AMD และ Intel ผ่าน Pytorch_DML
 
-(1) Real time voice change (2) Inference (3) Separation of vocal accompaniment (4) Training not currently supported, will switch to CPU training; supports RMVPE inference of gpu by Onnx_Dml
-
+(1) การเปลี่ยนเสียงแบบเรียลไทม์ (2) การอนุมาน (3) การแยกเสียงร้องประกอบ (4) ขณะนี้ยังไม่รองรับการฝึกอบรม จะเปลี่ยนไปใช้การฝึกอบรม CPU รองรับการอนุมาน RMVPE ของ GPU โดย Onnx_Dml
 
 ### 2023-06-18
-- New pretrained v2 models: 32k and 48k
-- Fix non-f0 model inference errors
-- For training-set exceeding 1 hour, do automatic minibatch-kmeans to reduce feature shape, so that index training, adding, and searching will be much faster.
-- Provide a toy vocal2guitar huggingface space
-- Auto delete outlier short cut training-set audios
-- Onnx export tab
+- โมเดล v2 ที่ฝึกไว้ล่วงหน้าใหม่: 32k และ 48k
+- แก้ไขข้อผิดพลาดในการอนุมานโมเดลที่ไม่ใช่ f0
+- สำหรับชุดฝึกอบรมที่เกิน 1 ชั่วโมง ให้ใช้ minibatch-kmeans อัตโนมัติเพื่อลดรูปร่างของฟีเจอร์ เพื่อให้การฝึกอบรม การเพิ่ม และการค้นหาดัชนีเร็วขึ้นมาก
 
-Failed experiments:
-- ~~Feature retrieval: add temporal feature retrieval: not effective~~
-- ~~Feature retrieval: add PCAR dimensionality reduction: searching is even slower~~
-- ~~Random data augmentation when training: not effective~~
+- จัดเตรียมพื้นที่สำหรับเสียงพูดและกีตาร์จำลอง (voice2guitar huggingface space)
+- ลบข้อมูลผิดปกติโดยอัตโนมัติในไฟล์เสียงชุดฝึกอบรมแบบย่อ
+- แท็บส่งออก Onnx
 
-todolist：
-- ~~Vocos-RVC (tiny vocoder): not effective~~
-- ~~Crepe support for training：replaced by RMVPE~~
-- ~~Half precision crepe inference：replaced by RMVPE. And hard to achive.~~
-- F0 editor support
+การทดลองที่ล้มเหลว:
+- ~~การดึงคุณลักษณะ: เพิ่มการดึงคุณลักษณะเชิงเวลา: ไม่ได้ผล~~
+- ~~การดึงคุณลักษณะ: เพิ่มการลดมิติ PCAR: การค้นหาช้าลงกว่าเดิม~~
+- ~~การเพิ่มข้อมูลแบบสุ่มระหว่างการฝึกอบรม: ไม่ได้ผล~~
+
+รายการสิ่งที่ต้องทำ:
+- ~~Vocos-RVC (vocoder ขนาดเล็ก): ไม่ได้ผล~~
+- ~~การสนับสนุน Crepe สำหรับการฝึกอบรม: ถูกแทนที่ด้วย RMVPE~~
+- ~~การอนุมาน Crepe ความแม่นยำครึ่งหนึ่ง: ถูกแทนที่ด้วย RMVPE และยากที่จะทำให้สำเร็จ~~
+- รองรับการแก้ไข F0
 
 ### 2023-05-28
-- Add v2 jupyter notebook, korean changelog, fix some environment requirments
-- Add voiceless consonant and breath protection mode
-- Support crepe-full pitch detect
-- UVR5 vocal separation: support dereverb models and de-echo models
-- Add experiment name and version on the name of index
-- Support users to manually select export format of output audios when batch voice conversion processing and UVR5 vocal separation
-- v1 32k model training is no more supported
+- เพิ่ม Jupyter Notebook เวอร์ชัน 2, บันทึกการเปลี่ยนแปลงภาษาเกาหลี, แก้ไขข้อกำหนดสภาพแวดล้อมบางอย่าง
+- เพิ่มโหมดป้องกันเสียงพยัญชนะไร้เสียงและลมหายใจ
+- รองรับการตรวจจับระดับเสียงแบบ crepe-full
+- การแยกเสียงร้อง UVR5: รองรับโมเดล dereverb และโมเดล de-echo
+- เพิ่มชื่อและเวอร์ชันของการทดลองในชื่อของดัชนี
+- รองรับให้ผู้ใช้เลือกรูปแบบการส่งออกของเสียงเอาต์พุตด้วยตนเองเมื่อประมวลผลการแปลงเสียงแบบกลุ่มและการแยกเสียงร้อง UVR5
+- ไม่รองรับการฝึกอบรมโมเดล 32k เวอร์ชัน 1 อีกต่อไป
 
 ### 2023-05-13
-- Clear the redundant codes in the old version of runtime in the one-click-package: lib.infer_pack and uvr5_pack
-- Fix pseudo multiprocessing bug in training set preprocessing
-- Adding median filtering radius adjustment for harvest pitch recognize algorithm
-- Support post processing resampling for exporting audio
-- Multi processing "n_cpu" setting for training is changed from "f0 extraction" to "data preprocessing and f0 extraction"
-- Automatically detect the index paths under the logs folder and provide a drop-down list function
-- Add "Frequently Asked Questions and Answers" on the tab page (you can also refer to github RVC wiki)
-- When inference, harvest pitch is cached when using same input audio path (purpose: using harvest pitch extraction, the entire pipeline will go through a long and repetitive pitch extraction process. If caching is not used, users who experiment with different timbre, index, and pitch median filtering radius settings will experience a very painful waiting process after the first inference)
+- ล้างโค้ดที่ซ้ำซ้อนในรันไทม์เวอร์ชันเก่าในแพ็คเกจแบบคลิกเดียว: lib.infer_pack และ uvr5_pack
+- แก้ไขข้อผิดพลาดของการประมวลผลแบบหลายกระบวนการเทียมในการประมวลผลชุดฝึกอบรมล่วงหน้า
+- เพิ่มการปรับรัศมีการกรองค่ามัธยฐานสำหรับอัลกอริทึมการจดจำระดับเสียงแบบเก็บเกี่ยว
+- รองรับการสุ่มตัวอย่างใหม่หลังการประมวลผลสำหรับการส่งออกเสียง
+- การประมวลผลแบบหลายกระบวนการ การตั้งค่า "n_cpu" สำหรับการฝึกอบรมเปลี่ยนจาก "การสกัด f0" เป็น "การประมวลผลข้อมูลและการสกัด f0"
+- ตรวจจับเส้นทางดัชนีในโฟลเดอร์บันทึกโดยอัตโนมัติและมีฟังก์ชันรายการแบบดรอปดาวน์
+- เพิ่ม "คำถามและคำตอบที่พบบ่อย" ในหน้าแท็บ (คุณสามารถดูข้อมูลเพิ่มเติมได้จากวิกิ RVC บน GitHub)
+- เมื่อทำการอนุมาน ระดับเสียงที่เก็บเกี่ยวจะถูกแคชไว้เมื่อใช้เส้นทางเสียงอินพุตเดียวกัน (วัตถุประสงค์: การใช้การสกัดระดับเสียงที่เก็บเกี่ยว จะทำให้กระบวนการทั้งหมดต้องผ่านกระบวนการสกัดระดับเสียงที่ยาวนานและซ้ำซาก หากไม่ได้ใช้การแคช ผู้ใช้ที่ทดลองกับการตั้งค่าเสียง ดัชนี และรัศมีการกรองค่ามัธยฐานของระดับเสียงที่แตกต่างกัน จะต้องรอเป็นเวลานานมากหลังจากการอนุมานครั้งแรก)
 
 ### 2023-05-14
-- Use volume envelope of input to mix or replace the volume envelope of output (can alleviate the problem of "input muting and output small amplitude noise". If the input audio background noise is high, it is not recommended to turn it on, and it is not turned on by default (1 can be considered as not turned on)
-- Support saving extracted small models at a specified frequency (if you want to see the performance under different epochs, but do not want to save all large checkpoints and manually extract small models by ckpt-processing every time, this feature will be very practical)
-- Resolve the issue of "connection errors" caused by the server's global proxy by setting environment variables
-- Supports pre-trained v2 models (currently only 40k versions are publicly available for testing, and the other two sampling rates have not been fully trained yet)
-- Limit excessive volume exceeding 1 before inference
-- Slightly adjusted the settings of training-set preprocessing
-
+- ใช้ซองเสียงของอินพุตเพื่อผสมหรือแทนที่ซองเสียงของเอาต์พุต (สามารถบรรเทาปัญหา "การปิดเสียงอินพุตและเสียงรบกวนแอมพลิจูดต่ำของเอาต์พุต" ได้ หากเสียงรบกวนพื้นหลังของเสียงอินพุตสูง ไม่แนะนำให้เปิดใช้งาน และไม่ใช่ เปิดใช้งานโดยค่าเริ่มต้น (1 หมายถึงไม่ได้เปิดใช้งาน)
+- รองรับการบันทึกโมเดลขนาดเล็กที่แยกออกมาตามความถี่ที่กำหนด (หากคุณต้องการดูประสิทธิภาพภายใต้ epoch ต่างๆ แต่ไม่ต้องการบันทึก checkpoint ขนาดใหญ่ทั้งหมดและแยกโมเดลขนาดเล็กด้วยตนเองโดยการประมวลผล ckpt ทุกครั้ง คุณสมบัตินี้จะมีประโยชน์มาก)
+- แก้ไขปัญหา "ข้อผิดพลาดในการเชื่อมต่อ" ที่เกิดจากพร็อกซีทั่วโลกของเซิร์ฟเวอร์โดยการตั้งค่าตัวแปรสภาพแวดล้อม
+- รองรับโมเดล v2 ที่ผ่านการฝึกฝนล่วงหน้า (ปัจจุบันมีเพียงเวอร์ชัน 40k เท่านั้นที่เปิดให้ทดสอบ และอัตราการสุ่มตัวอย่างอีกสองอัตรายังไม่ได้ฝึกฝนอย่างสมบูรณ์)
+- จำกัดปริมาณที่มากเกินไปเกิน 1 ก่อนการอนุมาน
+- ปรับการตั้งค่าการประมวลผลชุดข้อมูลการฝึกฝนเล็กน้อย
 
 #######################
 
-History changelogs:
+ประวัติการเปลี่ยนแปลง:
 
 ### 2023-04-09
-- Fixed training parameters to improve GPU utilization rate: A100 increased from 25% to around 90%, V100: 50% to around 90%, 2060S: 60% to around 85%, P40: 25% to around 95%; significantly improved training speed
-- Changed parameter: total batch_size is now per GPU batch_size
-- Changed total_epoch: maximum limit increased from 100 to 1000; default increased from 10 to 20
-- Fixed issue of ckpt extraction recognizing pitch incorrectly, causing abnormal inference
-- Fixed issue of distributed training saving ckpt for each rank
-- Applied nan feature filtering for feature extraction
-- Fixed issue with silent input/output producing random consonants or noise (old models need to retrain with a new dataset)
+- แก้ไขพารามิเตอร์การฝึกฝนเพื่อปรับปรุงอัตราการใช้งาน GPU: A100 เพิ่มขึ้นจาก 25% เป็นประมาณ 90%, V100: 50% ถึงประมาณ 90%, 2060S: 60% ถึงประมาณ 85%, P40: 25% ถึงประมาณ 95%; ความเร็วในการฝึกฝนดีขึ้นอย่างเห็นได้ชัด
+- เปลี่ยนพารามิเตอร์: ขนาดแบทช์ทั้งหมดตอนนี้เป็นขนาดแบทช์ต่อ GPU
+- เปลี่ยนจำนวนรอบการฝึกฝนทั้งหมด: เพิ่มขีดจำกัดสูงสุดจาก 10
 
-### 2023-04-16 Update
-- Added local real-time voice changing mini-GUI, start by double-clicking go-realtime-gui.bat
-- Applied filtering for frequency bands below 50Hz during training and inference
-- Lowered the minimum pitch extraction of pyworld from the default 80 to 50 for training and inference, allowing male low-pitched voices between 50-80Hz not to be muted
-- WebUI supports changing languages according to system locale (currently supporting en_US, ja_JP, zh_CN, zh_HK, zh_SG, zh_TW; defaults to en_US if not supported)
-- Fixed recognition of some GPUs (e.g., V100-16G recognition failure, P4 recognition failure)
-
-### 2023-04-28 Update
-- Upgraded faiss index settings for faster speed and higher quality
-- Removed dependency on total_npy; future model sharing will not require total_npy input
-- Unlocked restrictions for the 16-series GPUs, providing 4GB inference settings for 4GB VRAM GPUs
-- Fixed bug in UVR5 vocal accompaniment separation for certain audio formats
-- Real-time voice changing mini-GUI now supports non-40k and non-lazy pitch models
-
-### Future Plans:
-Features:
-- Add option: extract small models for each epoch save
-- Add option: export additional mp3 to the specified path during inference
-- Support multi-person training tab (up to 4 people)
-
-Base model:
-- Collect breathing wav files to add to the training dataset to fix the issue of distorted breath sounds
-- We are currently training a base model with an extended singing dataset, which will be released in the future
+### 2026-04-02
+- แก้ไขตัวโปรแกรมให้ทบทวนงานเรนเดอร์ด้วยตัวเอง ป้องกันการเรนเดอร์ทับถมกันอย่างไร้ประโยชน์
+- ปรับปรุงตัวเทรนให้เสถียรมากขึ้น
+- ปรับปรุงไฟล์เรนเดอร์ให้เหมือนต้นฉบับ 100%
+  
