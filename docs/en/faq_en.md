@@ -1,119 +1,71 @@
-## Q1:ffmpeg error/utf8 error.
-It is most likely not a FFmpeg issue, but rather an audio path issue;
+## Q1: ข้อผิดพลาด FFmpeg/ข้อผิดพลาด utf8
+ปัญหาอาจไม่ได้อยู่ที่ FFmpeg แต่เป็นปัญหาเกี่ยวกับเส้นทางไฟล์เสียงมากกว่า
 
-FFmpeg may encounter an error when reading paths containing special characters like spaces and (), which may cause an FFmpeg error; and when the training set's audio contains Chinese paths, writing it into filelist.txt may cause a utf8 error.<br>
+FFmpeg อาจพบข้อผิดพลาดเมื่ออ่านเส้นทางที่มีอักขระพิเศษ เช่น ช่องว่างและวงเล็บ () ซึ่งอาจทำให้เกิดข้อผิดพลาดของ FFmpeg และเมื่อไฟล์เสียงในชุดฝึกอบรมมีเส้นทางภาษาจีน การเขียนลงใน filelist.txt อาจทำให้เกิดข้อผิดพลาด utf8<br>
 
-## Q2:Cannot find index file after "One-click Training".
-If it displays "Training is done. The program is closed," then the model has been trained successfully, and the subsequent errors are fake;
+## Q2: ไม่พบไฟล์ดัชนีหลังจาก "การฝึกอบรมด้วยคลิกเดียว"
 
-The lack of an 'added' index file after One-click training may be due to the training set being too large, causing the addition of the index to get stuck; this has been resolved by using batch processing to add the index, which solves the problem of memory overload when adding the index. As a temporary solution, try clicking the "Train Index" button again.<br>
+หากแสดงข้อความ "การฝึกอบรมเสร็จสิ้น โปรแกรมปิดแล้ว" แสดงว่าโมเดลได้รับการฝึกอบรมสำเร็จแล้ว และข้อผิดพลาดที่ตามมาเป็นข้อผิดพลาดปลอม
 
-## Q3:Cannot find the model in “Inferencing timbre” after training
-Click “Refresh timbre list” and check again; if still not visible, check if there are any errors during training and send screenshots of the console, web UI, and logs/experiment_name/*.log to the developers for further analysis.<br>
+การไม่พบไฟล์ดัชนีที่ 'เพิ่ม' หลังจากฝึกอบรมด้วยคลิกเดียว อาจเกิดจากชุดฝึกอบรมมีขนาดใหญ่เกินไป ทำให้การเพิ่มดัชนีติดขัด ปัญหานี้ได้รับการแก้ไขแล้วโดยใช้การประมวลผลแบบกลุ่มเพื่อเพิ่มดัชนี ซึ่งช่วยแก้ปัญหาหน่วยความจำเกินเมื่อเพิ่มดัชนี วิธีแก้ปัญหาชั่วคราวคือ ลองคลิกปุ่ม "Train Index" อีกครั้ง<br>
 
-## Q4:How to share a model/How to use others' models?
-The pth files stored in rvc_root/logs/experiment_name are not meant for sharing or inference, but for storing the experiment checkpoits for reproducibility and further training. The model to be shared should be the 60+MB pth file in the weights folder;
+## Q3: ไม่พบโมเดลใน "Inferencing timbre" หลังจากการฝึกอบรม
+คลิก "Refresh timbre list" และตรวจสอบอีกครั้ง หากยังไม่พบ โปรดตรวจสอบว่ามีข้อผิดพลาดใด ๆ เกิดขึ้นระหว่างการฝึกอบรมหรือไม่ และส่งภาพหน้าจอของคอนโซล เว็บ UI และไฟล์ logs/experiment_name/*.log ให้กับนักพัฒนาเพื่อการวิเคราะห์เพิ่มเติม<br>
 
-In the future, weights/exp_name.pth and logs/exp_name/added_xxx.index will be merged into a single weights/exp_name.zip file to eliminate the need for manual index input; so share the zip file, not the pth file, unless you want to continue training on a different machine;
+## Q4: วิธีการแชร์โมเดล/วิธีการใช้โมเดลของผู้อื่น?
+ไฟล์ pth ที่จัดเก็บไว้ใน rvc_root/logs/experiment_name ไม่ได้มีไว้สำหรับการแชร์หรือการอนุมาน แต่มีไว้สำหรับจัดเก็บ checkpot ของการทดลองเพื่อความสามารถในการทำซ้ำและการฝึกอบรมเพิ่มเติม โมเดลที่จะแชร์ควรเป็นไฟล์ pth ขนาด 60+ MB ในโฟลเดอร์ weights;
 
-Copying/sharing the several hundred MB pth files from the logs folder to the weights folder for forced inference may result in errors such as missing f0, tgt_sr, or other keys. You need to use the ckpt tab at the bottom to manually or automatically (if the information is found in the logs/exp_name), select whether to include pitch infomation and target audio sampling rate options and then extract the smaller model. After extraction, there will be a 60+ MB pth file in the weights folder, and you can refresh the voices to use it.<br>
+ในอนาคต ไฟล์ weights/exp_name.pth และ logs/exp_name/added_xxx.index จะถูกรวมเข้าเป็นไฟล์ weights/exp_name.zip ไฟล์เดียว เพื่อลดความจำเป็นในการป้อนค่า index ด้วยตนเอง ดังนั้น โปรดแชร์ไฟล์ zip ไม่ใช่ไฟล์ pth เว้นแต่คุณต้องการฝึกฝนต่อบนเครื่องอื่น
 
-## Q5:Connection Error.
-You may have closed the console (black command line window).<br>
+การคัดลอก/แชร์ไฟล์ pth ขนาดหลายร้อย MB จากโฟลเดอร์ logs ไปยังโฟลเดอร์ weights สำหรับการอนุมานแบบบังคับ อาจทำให้เกิดข้อผิดพลาด เช่น f0, tgt_sr หรือคีย์อื่นๆ หายไป คุณต้องใช้แท็บ ckpt ที่ด้านล่างเพื่อเลือกด้วยตนเองหรือโดยอัตโนมัติ (หากพบข้อมูลใน logs/exp_name) ว่าจะรวมข้อมูล pitch และตัวเลือกอัตราการสุ่มตัวอย่างเสียงเป้าหมายหรือไม่ จากนั้นจึงแยกโมเดลขนาดเล็กออกมา หลังจากแยกแล้ว จะมีไฟล์ pth ขนาด 60+ MB อยู่ในโฟลเดอร์ weights และคุณสามารถรีเฟรชเสียงเพื่อใช้งานได้<br>
 
-## Q6:WebUI popup 'Expecting value: line 1 column 1 (char 0)'.
-Please disable system LAN proxy/global proxy and then refresh.<br>
+## Q5: ข้อผิดพลาดในการเชื่อมต่อ
 
-## Q7:How to train and infer without the WebUI?
-Training script:<br>
-You can run training in WebUI first, and the command-line versions of dataset preprocessing and training will be displayed in the message window.<br>
+## Q5: ข้อผิดพลาดในการเชื่อมต่อ คุณอาจปิดคอนโซล (หน้าต่างบรรทัดคำสั่งสีดำ) ไปแล้ว<br>
 
-Inference script:<br>
+## Q6: ข้อความป๊อปอัพ WebUI 'คาดหวังค่า: บรรทัดที่ 1 คอลัมน์ที่ 1 (อักขระที่ 0)'
+
+โปรดปิดใช้งานพร็อกซี LAN ของระบบ/พร็อกซีทั่วโลก แล้วรีเฟรชหน้าเว็บ<br>
+
+## Q7: จะฝึกฝนและอนุมานโดยไม่ใช้ WebUI ได้อย่างไร?
+
+## Q7: จะฝึกฝนและอนุมานโดยไม่ใช้ WebUI ได้อย่างไร? สคริปต์การฝึกอบรม:<br>
+คุณสามารถเรียกใช้การฝึกอบรมใน WebUI ก่อนได้ และเวอร์ชันบรรทัดคำสั่งของการประมวลผลข้อมูลและการฝึกอบรมจะแสดงในหน้าต่างข้อความ<br>
+
+สคริปต์การอนุมาน:<br>
 https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/myinfer.py<br>
 
+ตัวอย่างเช่น<br>
 
-e.g.<br>
-
-runtime\python.exe myinfer.py 0 "E:\codes\py39\RVC-beta\todo-songs\1111.wav" "E:\codes\py39\logs\mi-test\added_IVF677_Flat_nprobe_7.index" harvest "test.wav" "weights/mi-test.pth" 0.6 cuda:0 True<br>
-
+runtime\python.exe myinfer.py 0 "E:\codes\py39\RVC-beta\todo-songs\1111.wav" "E:\codes\py39\logs\mi-test\added_IVF677_Flat_nprobe_7.index" harvest "test.wav" "weights/mi-test.pth" 0.6 cuda:0 จริง<br>
 
 f0up_key=sys.argv[1]<br>
 input_path=sys.argv[2]<br>
 index_path=sys.argv[3]<br>
-f0method=sys.argv[4]#harvest or pm<br>
+f0method=sys.argv[4]#harvest หรือ pm<br>
 opt_path=sys.argv[5]<br>
 model_path=sys.argv[6]<br>
 index_rate=float(sys.argv[7])<br>
 device=sys.argv[8]<br>
 is_half=bool(sys.argv[9])<br>
 
-## Q8:Cuda error/Cuda out of memory.
-There is a small chance that there is a problem with the CUDA configuration or the device is not supported; more likely, there is not enough memory (out of memory).<br>
+## Q8: ข้อผิดพลาด CUDA/หน่วยความจำ CUDA ไม่เพียงพอ
+มีโอกาสเล็กน้อยที่จะมีปัญหาเกี่ยวกับการกำหนดค่า CUDA หรืออุปกรณ์ไม่ได้รับการสนับสนุน สาเหตุที่เป็นไปได้มากกว่าคือ หน่วยความจำไม่เพียงพอ (หน่วยความจำหมด)<br>
 
-For training, reduce the batch size (if reducing to 1 is still not enough, you may need to change the graphics card); for inference, adjust the x_pad, x_query, x_center, and x_max settings in the config.py file as needed. 4G or lower memory cards (e.g. 1060(3G) and various 2G cards) can be abandoned, while 4G memory cards still have a chance.<br>
+สำหรับการฝึก ให้ลดขนาดแบตช์ (ถ้าลดเหลือ 1 แล้วยังไม่เพียงพอ อาจต้องเปลี่ยนการ์ดจอ) สำหรับการอนุมาน ให้ปรับการตั้งค่า x_pad, x_query, x_center และ x_max ในไฟล์ config.py ตามความจำเป็น การ์ดหน่วยความจำ 4G หรือต่ำกว่า (เช่น 1060 (3G) และการ์ด 2G ต่างๆ) สามารถใช้งานได้โดยไม่ต้องปรับแต่ง ในขณะที่การ์ดหน่วยความจำ 4G ยังมีโอกาสใช้งานได้<br>
 
-## Q9:How many total_epoch are optimal?
-If the training dataset's audio quality is poor and the noise floor is high, 20-30 epochs are sufficient. Setting it too high won't improve the audio quality of your low-quality training set.<br>
+## Q9: จำนวน total_epoch ที่เหมาะสมที่สุดคือเท่าใด?
 
-If the training set audio quality is high, the noise floor is low, and there is sufficient duration, you can increase it. 200 is acceptable (since training is fast, and if you're able to prepare a high-quality training set, your GPU likely can handle a longer training duration without issue).<br>
+หากคุณภาพเสียงของชุดข้อมูลฝึกไม่ดีและมีเสียงรบกวนสูง 20-30 epoch ก็เพียงพอแล้ว การตั้งค่าสูงเกินไปจะไม่ช่วยปรับปรุงคุณภาพเสียงของชุดข้อมูลฝึกคุณภาพต่ำของคุณ<br>
 
-## Q10:How much training set duration is needed?
+หากคุณภาพเสียงของชุดข้อมูลฝึกสูง เสียงรบกวนต่ำ และมีระยะเวลาเพียงพอ คุณสามารถเพิ่มจำนวน epoch ได้ 200 นาทีถือว่ายอมรับได้ (เนื่องจากการฝึกฝนทำได้เร็ว และหากคุณสามารถเตรียมชุดข้อมูลฝึกฝนคุณภาพสูงได้ GPU ของคุณน่าจะสามารถรองรับระยะเวลาการฝึกฝนที่ยาวนานขึ้นได้โดยไม่มีปัญหา)<br>
 
-A dataset of around 10min to 50min is recommended.<br>
+## คำถามที่ 10: ต้องใช้ระยะเวลาการฝึกฝนนานเท่าใด?
 
-With guaranteed high sound quality and low bottom noise, more can be added if the dataset's timbre is uniform.<br>
+แนะนำให้ใช้ชุดข้อมูลที่มีความยาวประมาณ 10-50 นาที<br>
 
-For a high-level training set (lean + distinctive tone), 5min to 10min is fine.<br>
+หากรับประกันคุณภาพเสียงที่ดีและมีเสียงรบกวนต่ำ สามารถเพิ่มระยะเวลาได้มากขึ้นหากโทนเสียงของชุดข้อมูลมีความสม่ำเสมอ<br>
 
-There are some people who have trained successfully with 1min to 2min data, but the success is not reproducible by others and is not very informative. <br>This requires that the training set has a very distinctive timbre (e.g. a high-frequency airy anime girl sound) and the quality of the audio is high;
-Data of less than 1min duration has not been successfully attempted so far. This is not recommended.<br>
+สำหรับชุดข้อมูลฝึกฝนระดับสูง (เสียงใส + โทนเสียงที่โดดเด่น) 5-10 นาทีก็เพียงพอแล้ว<br>
 
-
-## Q11:What is the index rate for and how to adjust it?
-If the tone quality of the pre-trained model and inference source is higher than that of the training set, they can bring up the tone quality of the inference result, but at the cost of a possible tone bias towards the tone of the underlying model/inference source rather than the tone of the training set, which is generally referred to as "tone leakage".<br>
-
-The index rate is used to reduce/resolve the timbre leakage problem. If the index rate is set to 1, theoretically there is no timbre leakage from the inference source and the timbre quality is more biased towards the training set. If the training set has a lower sound quality than the inference source, then a higher index rate may reduce the sound quality. Turning it down to 0 does not have the effect of using retrieval blending to protect the training set tones.<br>
-
-If the training set has good audio quality and long duration, turn up the total_epoch, when the model itself is less likely to refer to the inferred source and the pretrained underlying model, and there is little "tone leakage", the index_rate is not important and you can even not create/share the index file.<br>
-
-## Q12:How to choose the gpu when inferring?
-In the config.py file, select the card number after "device cuda:".<br>
-
-The mapping between card number and graphics card can be seen in the graphics card information section of the training tab.<br>
-
-## Q13:How to use the model saved in the middle of training?
-Save via model extraction at the bottom of the ckpt processing tab.
-
-## Q14:File/memory error(when training)?
-Too many processes and your memory is not enough. You may fix it by:
-
-1、decrease the input in field "Threads of CPU".
-
-2、pre-cut trainset to shorter audio files.
-
-## Q15: How to continue training using more data
-
-step1: put all wav data to path2.
-
-step2: exp_name2+path2 -> process dataset and extract feature.
-
-step3: copy the latest G and D file of exp_name1 (your previous experiment) into exp_name2 folder.
-
-step4: click "train the model", and it will continue training from the beginning of your previous exp model epoch.
-
-## Q16: error about llvmlite.dll
-
-OSError: Could not load shared object file: llvmlite.dll
-
-FileNotFoundError: Could not find module lib\site-packages\llvmlite\binding\llvmlite.dll (or one of its dependencies). Try using the full path with constructor syntax.
-
-The issue will happen in windows, install https://aka.ms/vs/17/release/vc_redist.x64.exe and it will be fixed.
-
-## Q17: RuntimeError: The expanded size of the tensor (17280) must match the existing size (0) at non-singleton dimension 1.  Target sizes: [1, 17280].  Tensor sizes: [0]
-
-Delete the wav files whose size is significantly smaller than others, and that won't happen again. Than click "train the model"and "train the index".
-
-## Q18: RuntimeError: The size of tensor a (24) must match the size of tensor b (16) at non-singleton dimension 2
-
-Do not change the sampling rate and then continue training. If it is necessary to change, the exp name should be changed and the model will be trained from scratch. You can also copy the pitch and features (0/1/2/2b folders) extracted last time to accelerate the training process.
-
+มีบางคนที่ฝึกฝนได้สำเร็จด้วยข้อมูล 1-2 นาที แต่ความสำเร็จนั้นไม่สามารถทำซ้ำได้โดยผู้อื่นและไม่ให้ข้อมูลที่เป็นประโยชน์มากนัก<br>ซึ่งจำเป็นต้องใช้ชุดข้อมูลฝึกฝนที่มีโทนเสียงที่โดดเด่นมาก (เช่น เสียงอนิเมะที่มีความถี่สูงและโปร่ง)
