@@ -57,11 +57,14 @@ def show_info(path):
     """
     try:
         a = torch.load(path, map_location="cpu")
-        return "ข้อมูลโมเดล (Model Info): %s\nอัตราสุ่มตัวอย่าง (Sample Rate): %s\nใช้การชี้นำระดับเสียง (Pitch Guidance): %s\nเวอร์ชัน (Version): %s" % (
-            a.get("info", "None"),
-            a.get("sr", "None"),
-            a.get("f0", "None"),
-            a.get("version", "None"),
+        return (
+            "ข้อมูลโมเดล (Model Info): %s\nอัตราสุ่มตัวอย่าง (Sample Rate): %s\nใช้การชี้นำระดับเสียง (Pitch Guidance): %s\nเวอร์ชัน (Version): %s"
+            % (
+                a.get("info", "None"),
+                a.get("sr", "None"),
+                a.get("f0", "None"),
+                a.get("version", "None"),
+            )
         )
     except:
         return traceback.format_exc()
@@ -221,6 +224,7 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
     ผสานโมเดลสองตัวเข้าด้วยกัน (Merge Models)
     """
     try:
+
         def extract(ckpt):
             a = ckpt["model"]
             opt = OrderedDict()
@@ -242,10 +246,10 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
             ckpt2 = extract(ckpt2)
         else:
             ckpt2 = ckpt2["weight"]
-            
+
         if sorted(list(ckpt1.keys())) != sorted(list(ckpt2.keys())):
             return "❌ การผสานล้มเหลว: โครงสร้างของโมเดลทั้งสองไม่ตรงกัน (Fail to merge. Model architectures are not the same.)"
-            
+
         opt = OrderedDict()
         opt["weight"] = {}
         for key in ckpt1.keys():
@@ -262,7 +266,7 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
 
         opt["config"] = cfg
         opt["sr"] = sr
-        
+
         # แก้ไขบัคภาษาจีน รองรับ Input แบบสากล (Fixed F0 parsing bug)
         opt["f0"] = 1 if str(f0).lower() in ["yes", "ใช่", "1", "true"] else 0
         opt["version"] = version

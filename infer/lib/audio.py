@@ -7,12 +7,13 @@ import numpy as np
 import av
 from typing import Union
 
+
 def wav2(i: str, o: str, output_format: str):
     """
     แปลงไฟล์เสียงโดยใช้ PyAV พร้อมการจัดการ Codec ที่ถูกต้อง
     """
     inp = av.open(i, "rb")
-    
+
     # ปรับปรุงการเลือก Format และ Codec ให้เหมาะสม
     if output_format == "m4a":
         output_format = "mp4"
@@ -39,9 +40,10 @@ def wav2(i: str, o: str, output_format: str):
     out.close()
     inp.close()
 
+
 def load_audio(file: str, sr: int) -> np.ndarray:
     """
-    โหลดไฟล์เสียงและแปลงเป็น Floating Point 32-bit 
+    โหลดไฟล์เสียงและแปลงเป็น Floating Point 32-bit
     พร้อมปรับปรุงคุณภาพเพื่อลดอาการเสียงแหบและเสียงแตก
     """
     try:
@@ -54,8 +56,10 @@ def load_audio(file: str, sr: int) -> np.ndarray:
         # 2. 'resampler' คุณภาพสูง (soxr)
         out, _ = (
             ffmpeg.input(file, threads=0)
-            .filter("aresample", sr, resampler="soxr") # ใช้ soxr เพื่อความใสของเสียง
-            .filter("volume", "0.95") # ลดระดับลงเล็กน้อยเพื่อป้องกัน Clipping (Headroom)
+            .filter("aresample", sr, resampler="soxr")  # ใช้ soxr เพื่อความใสของเสียง
+            .filter(
+                "volume", "0.95"
+            )  # ลดระดับลงเล็กน้อยเพื่อป้องกัน Clipping (Headroom)
             .output("-", format="f32le", acodec="pcm_f32le", ac=1)
             .run(cmd=["ffmpeg", "-nostdin"], capture_stdout=True, capture_stderr=True)
         )
@@ -65,7 +69,7 @@ def load_audio(file: str, sr: int) -> np.ndarray:
 
     # แปลงเป็น Numpy Array
     audio_data = np.frombuffer(out, np.float32).flatten()
-    
+
     # ตรวจสอบและแก้ไขกรณีระดับเสียงเบาเกินไป (Automatic Gain Control)
     # หากค่าสูงสุดยังต่ำมาก ให้ขยายขึ้นมาในระดับที่เหมาะสม
     max_val = np.abs(audio_data).max()
@@ -74,15 +78,16 @@ def load_audio(file: str, sr: int) -> np.ndarray:
 
     return audio_data
 
+
 def clean_path(path_str: str) -> str:
     """
     ทำความสะอาดเส้นทางไฟล์ ป้องกันข้อผิดพลาดจากการคัดลอกเส้นทางที่มีอักขระพิเศษ
     """
     if platform.system() == "Windows":
         path_str = path_str.replace("/", "\\")
-    
+
     # กำจัด Unicode Control Characters ที่มักติดมากับการคัดลอกใน Windows
-    path_str = re.sub(r'[\u202a\u202b\u202c\u202d\u202e]', '', path_str)
-    
+    path_str = re.sub(r"[\u202a\u202b\u202c\u202d\u202e]", "", path_str)
+
     # ลบช่องว่างและเครื่องหมายคำพูดที่เกินมา
     return path_str.strip().strip('"').strip("'").strip()

@@ -9,13 +9,16 @@ import torch.nn.functional as F
 from fairseq.checkpoint_utils import load_model_ensemble_and_task
 from fairseq.utils import index_put
 
+
 class HuBERTFeatureExtractor:
     """
-    คลาสสำหรับจัดการการดึงข้อมูล Feature จากโมเดล HuBERT 
+    คลาสสำหรับจัดการการดึงข้อมูล Feature จากโมเดล HuBERT
     รองรับการทำ Masking, Padding และการดึงข้อมูลจาก Layer ที่ระบุ
     """
-    
-    def __init__(self, model_path: str = "assets/hubert/hubert_base.pt", device: str = "cpu"):
+
+    def __init__(
+        self, model_path: str = "assets/hubert/hubert_base.pt", device: str = "cpu"
+    ):
         self.device = torch.device(device)
         self.model = self._load_model(model_path)
         self._wrap_methods()
@@ -31,27 +34,26 @@ class HuBERTFeatureExtractor:
     def _wrap_methods(self):
         """ทำการเชื่อมต่อฟังก์ชันปรับแต่งเข้ากับโครงสร้างของ Fairseq"""
         # ผูกฟังก์ชันเข้ากับโมเดลแบบไดนามิกอย่างเป็นระเบียบ
-        self.model.encoder.extract_features = self.extract_encoder_features.__get__(self.model.encoder)
+        self.model.encoder.extract_features = self.extract_encoder_features.__get__(
+            self.model.encoder
+        )
         self.model.apply_mask = self.apply_mask_to_input.__get__(self.model)
 
     @staticmethod
     def pad_to_multiple(
-        x: torch.Tensor, 
-        multiple: int, 
-        dim: int = -1, 
-        value: float = 0
+        x: torch.Tensor, multiple: int, dim: int = -1, value: float = 0
     ) -> Tuple[torch.Tensor, int]:
         """ปรับขนาด Sequence ให้หารด้วยค่า multiple ลงตัว"""
         if x is None:
             return None, 0
-        
+
         current_size = x.size(dim)
         target_size = math.ceil(current_size / multiple) * multiple
         remainder = target_size - current_size
-        
+
         if remainder == 0:
             return x, 0
-            
+
         # สร้าง Padding config สำหรับมิติที่ต้องการ
         pad_offset = (0,) * (abs(dim) - 1) * 2
         return F.pad(x, (*pad_offset, 0, remainder), value=value), remainder
@@ -80,13 +82,17 @@ class HuBERTFeatureExtractor:
             if padding_mask is not None:
                 actual_sz = all_sz - padding_mask[i].sum().item()
 
-            num_mask = int(mask_prob * actual_sz / float(mask_length) + np.random.rand())
+            num_mask = int(
+                mask_prob * actual_sz / float(mask_length) + np.random.rand()
+            )
             num_mask = max(min_masks, num_mask)
 
             if mask_type == "static":
                 lengths = [mask_length] * num_mask
             elif mask_type == "uniform":
-                lengths = np.random.randint(int(mask_other), mask_length * 2 + 1, size=num_mask)
+                lengths = np.random.randint(
+                    int(mask_other), mask_length * 2 + 1, size=num_mask
+                )
             elif mask_type == "normal":
                 lengths = np.random.normal(mask_length, mask_other, size=num_mask)
                 lengths = [max(1, int(round(x))) for x in lengths]
@@ -103,13 +109,20 @@ class HuBERTFeatureExtractor:
                 # เพื่อความกระชับ ในที่นี้เน้นการทำงานพื้นฐานที่เสถียร
                 available_indices = list(range(actual_sz - max(lengths) - min_space))
                 for length in sorted(lengths, reverse=True):
-                    if not available_indices: break
+                    if not available_indices:
+                        break
                     start = random.choice(available_indices)
                     mask_idc.extend(range(start, start + length))
                     # ลบพื้นที่ใกล้เคียงออกเพื่อกัน overlap
-                    available_indices = [idx for idx in available_indices if idx < start - min_space or idx > start + length + min_space]
+                    available_indices = [
+                        idx
+                        for idx in available_indices
+                        if idx < start - min_space or idx > start + length + min_space
+                    ]
             else:
-                starts = np.random.choice(actual_sz - min(lengths), num_mask, replace=True)
+                starts = np.random.choice(
+                    actual_sz - min(lengths), num_mask, replace=True
+                )
                 for start, length in zip(starts, lengths):
                     mask_idc.extend(range(start, min(start + length, actual_sz)))
 
@@ -120,7 +133,7 @@ class HuBERTFeatureExtractor:
     def apply_mask_to_input(self, x: torch.Tensor, padding_mask: torch.Tensor):
         """ดำเนินการใส่ Mask Embedding ลงในข้อมูล"""
         B, T, C = x.shape
-        if hasattr(self.model, 'mask_prob') and self.model.mask_prob > 0:
+        if hasattr(self.model, "mask_prob") and self.model.mask_prob > 0:
             mask_indices = self.compute_mask_indices(
                 (B, T), padding_mask, self.model.mask_prob, self.model.mask_length
             )
@@ -154,7 +167,7 @@ class HuBERTFeatureExtractor:
         x, pad_length = HuBERTFeatureExtractor.pad_to_multiple(
             x, self.required_seq_len_multiple, dim=-2
         )
-        
+
         if pad_length > 0:
             if padding_mask is None:
                 padding_mask = x.new_zeros((x.size(0), x.size(1)), dtype=torch.bool)
@@ -171,10 +184,12 @@ class HuBERTFeatureExtractor:
         for i, layer in enumerate(self.layers):
             # ตรวจสอบ LayerDrop
             if not self.training or (np.random.random() > self.layerdrop):
-                x, (z, lr) = layer(x, self_attn_padding_mask=padding_mask, need_weights=False)
+                x, (z, lr) = layer(
+                    x, self_attn_padding_mask=padding_mask, need_weights=False
+                )
                 if i >= min_layer:
                     layer_results.append((x, z, lr))
-            
+
             if i == tgt_layer:
                 break
 
@@ -184,13 +199,22 @@ class HuBERTFeatureExtractor:
         if pad_length > 0:
             x = x[:, :-pad_length]
             layer_results = [
-                (a[:-pad_length], b[:-pad_length] if b is not None else None, c[:-pad_length])
+                (
+                    a[:-pad_length],
+                    b[:-pad_length] if b is not None else None,
+                    c[:-pad_length],
+                )
                 for a, b, c in layer_results
             ]
 
         return x, layer_results
 
-    def infer(self, source: torch.Tensor, padding_mask: Optional[torch.Tensor] = None, output_layer: int = 9) -> torch.Tensor:
+    def infer(
+        self,
+        source: torch.Tensor,
+        padding_mask: Optional[torch.Tensor] = None,
+        output_layer: int = 9,
+    ) -> torch.Tensor:
         """ฟังก์ชันสำหรับใช้งานจริง (Inference)"""
         with torch.no_grad():
             # ดึงข้อมูลผ่าน forward ของ fairseq โดยตรง
@@ -198,12 +222,12 @@ class HuBERTFeatureExtractor:
                 source,
                 padding_mask=padding_mask,
                 features_only=True,
-                output_layer=output_layer
+                output_layer=output_layer,
             )
-            
+
             feature = res["x"]
             # หากเป็น Layer สุดท้าย (ในที่นี้คือ 9 ตามต้นฉบับ) ให้ผ่าน Final Projection
             if output_layer == 9:
                 feature = self.model.final_proj(feature)
-                
+
             return feature

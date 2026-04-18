@@ -227,7 +227,7 @@ def scaled_dot_product_attention(
 
 def attention_init():
     """
-    ฟังก์ชันเริ่มต้นเพื่อเข้าควบคุมการคำนวณ Attention 
+    ฟังก์ชันเริ่มต้นเพื่อเข้าควบคุมการคำนวณ Attention
     (Initialize Monkey-patch for Intel ARC GPUs)
     """
     # แทนที่ฟังก์ชันดั้งเดิมด้วยฟังก์ชันที่เขียนขึ้นมาใหม่
