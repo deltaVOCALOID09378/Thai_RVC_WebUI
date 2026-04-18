@@ -1,5 +1,10 @@
 name: Unit Test
-on: [ push, pull_request ]
+on: 
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -10,23 +15,31 @@ jobs:
       fail-fast: true
 
     steps:
-    - uses: actions/checkout@master
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        cache: 'pip'
+
+    - name: Install System Dependencies
       run: |
-        sudo apt update
-        sudo apt -y install ffmpeg
-        sudo apt -y install -qq aria2
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq ffmpeg aria2
+
+    - name: Download HuBERT Model
+      run: |
         aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt -d ./ -o hubert_base.pt
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools
-        python -m pip install --upgrade wheel
-        pip install torch torchvision torchaudio
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         pip install -r requirements.txt
-    - name: Test step 1 & 2
+
+    - name: Run Test Steps (Preprocess & Extract)
       run: |
         mkdir -p logs/mi-test
         touch logs/mi-test/preprocess.log
