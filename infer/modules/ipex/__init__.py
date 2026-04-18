@@ -11,7 +11,7 @@ from .attention import attention_init
 
 def ipex_init():  # pylint: disable=too-many-statements
     """
-    ฟังก์ชันสับขาหลอก (Hijack) เพื่อให้ PyTorch ที่เขียนมาเพื่อ NVIDIA (CUDA) 
+    ฟังก์ชันสับขาหลอก (Hijack) เพื่อให้ PyTorch ที่เขียนมาเพื่อ NVIDIA (CUDA)
     สามารถทำงานบนการ์ดจอ Intel (XPU) ได้อย่างไร้รอยต่อ
     (Monkey-patching torch.cuda to torch.xpu for Intel GPU compatibility)
     """
@@ -182,7 +182,7 @@ def ipex_init():  # pylint: disable=too-many-statements
         torch.cuda.get_device_properties.minor = 7
         torch.cuda.ipc_collect = lambda *args, **kwargs: None
         torch.cuda.utilization = lambda *args, **kwargs: 0
-        
+
         if hasattr(torch.xpu, "getDeviceIdListForCard"):
             torch.cuda.getDeviceIdListForCard = torch.xpu.getDeviceIdListForCard
             torch.cuda.get_device_id_list_per_card = torch.xpu.getDeviceIdListForCard
@@ -200,8 +200,8 @@ def ipex_init():  # pylint: disable=too-many-statements
             ipex_diffusers()
         except Exception:  # pylint: disable=broad-exception-caught
             pass
-            
+
     except Exception as e:
         return False, e
-        
+
     return True, None
