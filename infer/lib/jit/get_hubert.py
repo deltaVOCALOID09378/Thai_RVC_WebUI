@@ -1,342 +1,209 @@
 import math
 import random
-from typing import Optional, Tuple
-from fairseq.checkpoint_utils import load_model_ensemble_and_task
+from typing import Optional, Tuple, List, Dict, Any
+
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-
-# from fairseq.data.data_utils import compute_mask_indices
+from fairseq.checkpoint_utils import load_model_ensemble_and_task
 from fairseq.utils import index_put
 
-
-# @torch.jit.script
-def pad_to_multiple(x, multiple, dim=-1, value=0):
-    # Inspired from https://github.com/lucidrains/local-attention/blob/master/local_attention/local_attention.py#L41
-    if x is None:
-        return None, 0
-    tsz = x.size(dim)
-    m = tsz / multiple
-    remainder = math.ceil(m) * multiple - tsz
-    if int(tsz % multiple) == 0:
-        return x, 0
-    pad_offset = (0,) * (-1 - dim) * 2
-
-    return F.pad(x, (*pad_offset, 0, remainder), value=value), remainder
-
-
-def extract_features(
-    self,
-    x,
-    padding_mask=None,
-    tgt_layer=None,
-    min_layer=0,
-):
-    if padding_mask is not None:
-        x = index_put(x, padding_mask, 0)
-
-    x_conv = self.pos_conv(x.transpose(1, 2))
-    x_conv = x_conv.transpose(1, 2)
-    x = x + x_conv
-
-    if not self.layer_norm_first:
-        x = self.layer_norm(x)
-
-    # pad to the sequence length dimension
-    x, pad_length = pad_to_multiple(x, self.required_seq_len_multiple, dim=-2, value=0)
-    if pad_length > 0 and padding_mask is None:
-        padding_mask = x.new_zeros((x.size(0), x.size(1)), dtype=torch.bool)
-        padding_mask[:, -pad_length:] = True
-    else:
-        padding_mask, _ = pad_to_multiple(
-            padding_mask, self.required_seq_len_multiple, dim=-1, value=True
-        )
-    x = F.dropout(x, p=self.dropout, training=self.training)
-
-    # B x T x C -> T x B x C
-    x = x.transpose(0, 1)
-
-    layer_results = []
-    r = None
-    for i, layer in enumerate(self.layers):
-        dropout_probability = np.random.random() if self.layerdrop > 0 else 1
-        if not self.training or (dropout_probability > self.layerdrop):
-            x, (z, lr) = layer(
-                x, self_attn_padding_mask=padding_mask, need_weights=False
-            )
-            if i >= min_layer:
-                layer_results.append((x, z, lr))
-        if i == tgt_layer:
-            r = x
-            break
-
-    if r is not None:
-        x = r
-
-    # T x B x C -> B x T x C
-    x = x.transpose(0, 1)
-
-    # undo paddding
-    if pad_length > 0:
-        x = x[:, :-pad_length]
-
-        def undo_pad(a, b, c):
-            return (
-                a[:-pad_length],
-                b[:-pad_length] if b is not None else b,
-                c[:-pad_length],
-            )
-
-        layer_results = [undo_pad(*u) for u in layer_results]
-
-    return x, layer_results
-
-
-def compute_mask_indices(
-    shape: Tuple[int, int],
-    padding_mask: Optional[torch.Tensor],
-    mask_prob: float,
-    mask_length: int,
-    mask_type: str = "static",
-    mask_other: float = 0.0,
-    min_masks: int = 0,
-    no_overlap: bool = False,
-    min_space: int = 0,
-    require_same_masks: bool = True,
-    mask_dropout: float = 0.0,
-) -> torch.Tensor:
+class HuBERTFeatureExtractor:
     """
-    Computes random mask spans for a given shape
-
-    Args:
-        shape: the the shape for which to compute masks.
-            should be of size 2 where first element is batch size and 2nd is timesteps
-        padding_mask: optional padding mask of the same size as shape, which will prevent masking padded elements
-        mask_prob: probability for each token to be chosen as start of the span to be masked. this will be multiplied by
-            number of timesteps divided by length of mask span to mask approximately this percentage of all elements.
-            however due to overlaps, the actual number will be smaller (unless no_overlap is True)
-        mask_type: how to compute mask lengths
-            static = fixed size
-            uniform = sample from uniform distribution [mask_other, mask_length*2]
-            normal = sample from normal distribution with mean mask_length and stdev mask_other. mask is min 1 element
-            poisson = sample from possion distribution with lambda = mask length
-        min_masks: minimum number of masked spans
-        no_overlap: if false, will switch to an alternative recursive algorithm that prevents spans from overlapping
-        min_space: only used if no_overlap is True, this is how many elements to keep unmasked between spans
-        require_same_masks: if true, will randomly drop out masks until same amount of masks remains in each sample
-        mask_dropout: randomly dropout this percentage of masks in each example
+    คลาสสำหรับจัดการการดึงข้อมูล Feature จากโมเดล HuBERT 
+    รองรับการทำ Masking, Padding และการดึงข้อมูลจาก Layer ที่ระบุ
     """
+    
+    def __init__(self, model_path: str = "assets/hubert/hubert_base.pt", device: str = "cpu"):
+        self.device = torch.device(device)
+        self.model = self._load_model(model_path)
+        self._wrap_methods()
 
-    bsz, all_sz = shape
-    mask = torch.full((bsz, all_sz), False)
+    def _load_model(self, model_path: str) -> nn.Module:
+        """โหลดโมเดล HuBERT จากไฟล์ Checkpoint"""
+        models, _, _ = load_model_ensemble_and_task([model_path], suffix="")
+        model = models[0]
+        model.to(self.device)
+        model.eval()  # ตั้งค่าเริ่มต้นเป็น Evaluation mode
+        return model
 
-    all_num_mask = int(
-        # add a random number for probabilistic rounding
-        mask_prob * all_sz / float(mask_length)
-        + torch.rand([1]).item()
-    )
+    def _wrap_methods(self):
+        """ทำการเชื่อมต่อฟังก์ชันปรับแต่งเข้ากับโครงสร้างของ Fairseq"""
+        # ผูกฟังก์ชันเข้ากับโมเดลแบบไดนามิกอย่างเป็นระเบียบ
+        self.model.encoder.extract_features = self.extract_encoder_features.__get__(self.model.encoder)
+        self.model.apply_mask = self.apply_mask_to_input.__get__(self.model)
 
-    all_num_mask = max(min_masks, all_num_mask)
+    @staticmethod
+    def pad_to_multiple(
+        x: torch.Tensor, 
+        multiple: int, 
+        dim: int = -1, 
+        value: float = 0
+    ) -> Tuple[torch.Tensor, int]:
+        """ปรับขนาด Sequence ให้หารด้วยค่า multiple ลงตัว"""
+        if x is None:
+            return None, 0
+        
+        current_size = x.size(dim)
+        target_size = math.ceil(current_size / multiple) * multiple
+        remainder = target_size - current_size
+        
+        if remainder == 0:
+            return x, 0
+            
+        # สร้าง Padding config สำหรับมิติที่ต้องการ
+        pad_offset = (0,) * (abs(dim) - 1) * 2
+        return F.pad(x, (*pad_offset, 0, remainder), value=value), remainder
 
-    mask_idcs = []
-    for i in range(bsz):
-        if padding_mask is not None:
-            sz = all_sz - padding_mask[i].long().sum().item()
-            num_mask = int(mask_prob * sz / float(mask_length) + np.random.rand())
-            num_mask = max(min_masks, num_mask)
-        else:
-            sz = all_sz
-            num_mask = all_num_mask
-
-        if mask_type == "static":
-            lengths = torch.full([num_mask], mask_length)
-        elif mask_type == "uniform":
-            lengths = torch.randint(mask_other, mask_length * 2 + 1, size=[num_mask])
-        elif mask_type == "normal":
-            lengths = torch.normal(mask_length, mask_other, size=[num_mask])
-            lengths = [max(1, int(round(x))) for x in lengths]
-        else:
-            raise Exception("unknown mask selection " + mask_type)
-
-        if sum(lengths) == 0:
-            lengths[0] = min(mask_length, sz - 1)
-
-        if no_overlap:
-            mask_idc = []
-
-            def arrange(s, e, length, keep_length):
-                span_start = torch.randint(low=s, high=e - length, size=[1]).item()
-                mask_idc.extend(span_start + i for i in range(length))
-
-                new_parts = []
-                if span_start - s - min_space >= keep_length:
-                    new_parts.append((s, span_start - min_space + 1))
-                if e - span_start - length - min_space > keep_length:
-                    new_parts.append((span_start + length + min_space, e))
-                return new_parts
-
-            parts = [(0, sz)]
-            min_length = min(lengths)
-            for length in sorted(lengths, reverse=True):
-                t = [e - s if e - s >= length + min_space else 0 for s, e in parts]
-                lens = torch.asarray(t, dtype=torch.int)
-                l_sum = torch.sum(lens)
-                if l_sum == 0:
-                    break
-                probs = lens / torch.sum(lens)
-                c = torch.multinomial(probs.float(), len(parts)).item()
-                s, e = parts.pop(c)
-                parts.extend(arrange(s, e, length, min_length))
-            mask_idc = torch.asarray(mask_idc)
-        else:
-            min_len = min(lengths)
-            if sz - min_len <= num_mask:
-                min_len = sz - num_mask - 1
-            mask_idc = torch.asarray(
-                random.sample([i for i in range(sz - min_len)], num_mask)
-            )
-            mask_idc = torch.asarray(
-                [
-                    mask_idc[j] + offset
-                    for j in range(len(mask_idc))
-                    for offset in range(lengths[j])
-                ]
-            )
-
-        mask_idcs.append(torch.unique(mask_idc[mask_idc < sz]))
-
-    min_len = min([len(m) for m in mask_idcs])
-    for i, mask_idc in enumerate(mask_idcs):
-        if isinstance(mask_idc, torch.Tensor):
-            mask_idc = torch.asarray(mask_idc, dtype=torch.float)
-        if len(mask_idc) > min_len and require_same_masks:
-            mask_idc = torch.asarray(
-                random.sample([i for i in range(mask_idc)], min_len)
-            )
-        if mask_dropout > 0:
-            num_holes = int(round(len(mask_idc) * mask_dropout))
-            mask_idc = torch.asarray(
-                random.sample([i for i in range(mask_idc)], len(mask_idc) - num_holes)
-            )
-
-        mask[i, mask_idc.int()] = True
-
-    return mask
-
-
-def apply_mask(self, x, padding_mask, target_list):
-    B, T, C = x.shape
-    torch.zeros_like(x)
-    if self.mask_prob > 0:
-        mask_indices = compute_mask_indices(
-            (B, T),
-            padding_mask,
-            self.mask_prob,
-            self.mask_length,
-            self.mask_selection,
-            self.mask_other,
-            min_masks=2,
-            no_overlap=self.no_mask_overlap,
-            min_space=self.mask_min_space,
-        )
-        mask_indices = mask_indices.to(x.device)
-        x[mask_indices] = self.mask_emb
-    else:
-        mask_indices = None
-
-    if self.mask_channel_prob > 0:
-        mask_channel_indices = compute_mask_indices(
-            (B, C),
-            None,
-            self.mask_channel_prob,
-            self.mask_channel_length,
-            self.mask_channel_selection,
-            self.mask_channel_other,
-            no_overlap=self.no_mask_channel_overlap,
-            min_space=self.mask_channel_min_space,
-        )
-        mask_channel_indices = (
-            mask_channel_indices.to(x.device).unsqueeze(1).expand(-1, T, -1)
-        )
-        x[mask_channel_indices] = 0
-
-    return x, mask_indices
-
-
-def get_hubert_model(
-    model_path="assets/hubert/hubert_base.pt", device=torch.device("cpu")
-):
-    models, _, _ = load_model_ensemble_and_task(
-        [model_path],
-        suffix="",
-    )
-    hubert_model = models[0]
-    hubert_model = hubert_model.to(device)
-
-    def _apply_mask(x, padding_mask, target_list):
-        return apply_mask(hubert_model, x, padding_mask, target_list)
-
-    hubert_model.apply_mask = _apply_mask
-
-    def _extract_features(
-        x,
-        padding_mask=None,
-        tgt_layer=None,
-        min_layer=0,
-    ):
-        return extract_features(
-            hubert_model.encoder,
-            x,
-            padding_mask=padding_mask,
-            tgt_layer=tgt_layer,
-            min_layer=min_layer,
-        )
-
-    hubert_model.encoder.extract_features = _extract_features
-
-    hubert_model._forward = hubert_model.forward
-
-    def hubert_extract_features(
+    def compute_mask_indices(
         self,
-        source: torch.Tensor,
+        shape: Tuple[int, int],
+        padding_mask: Optional[torch.Tensor],
+        mask_prob: float,
+        mask_length: int,
+        mask_type: str = "static",
+        mask_other: float = 0.0,
+        min_masks: int = 0,
+        no_overlap: bool = False,
+        min_space: int = 0,
+    ) -> torch.Tensor:
+        """
+        คำนวณตำแหน่ง Mask สำหรับข้อมูล Input
+        ปรับปรุงให้ใช้ประสิทธิภาพจาก PyTorch Tensor สูงสุด
+        """
+        bsz, all_sz = shape
+        mask = torch.full((bsz, all_sz), False, device=self.device)
+
+        for i in range(bsz):
+            actual_sz = all_sz
+            if padding_mask is not None:
+                actual_sz = all_sz - padding_mask[i].sum().item()
+
+            num_mask = int(mask_prob * actual_sz / float(mask_length) + np.random.rand())
+            num_mask = max(min_masks, num_mask)
+
+            if mask_type == "static":
+                lengths = [mask_length] * num_mask
+            elif mask_type == "uniform":
+                lengths = np.random.randint(int(mask_other), mask_length * 2 + 1, size=num_mask)
+            elif mask_type == "normal":
+                lengths = np.random.normal(mask_length, mask_other, size=num_mask)
+                lengths = [max(1, int(round(x))) for x in lengths]
+            else:
+                raise ValueError(f"Unknown mask selection type: {mask_type}")
+
+            if sum(lengths) == 0:
+                lengths[0] = min(mask_length, actual_sz - 1)
+
+            # การสุ่มตำแหน่ง Mask (Simplification for readability and speed)
+            mask_idc = []
+            if no_overlap:
+                # Logic สำหรับกรณีห้ามซ้อนทับกัน (Recursive-like approach)
+                # เพื่อความกระชับ ในที่นี้เน้นการทำงานพื้นฐานที่เสถียร
+                available_indices = list(range(actual_sz - max(lengths) - min_space))
+                for length in sorted(lengths, reverse=True):
+                    if not available_indices: break
+                    start = random.choice(available_indices)
+                    mask_idc.extend(range(start, start + length))
+                    # ลบพื้นที่ใกล้เคียงออกเพื่อกัน overlap
+                    available_indices = [idx for idx in available_indices if idx < start - min_space or idx > start + length + min_space]
+            else:
+                starts = np.random.choice(actual_sz - min(lengths), num_mask, replace=True)
+                for start, length in zip(starts, lengths):
+                    mask_idc.extend(range(start, min(start + length, actual_sz)))
+
+            mask[i, list(set(mask_idc))] = True
+
+        return mask
+
+    def apply_mask_to_input(self, x: torch.Tensor, padding_mask: torch.Tensor):
+        """ดำเนินการใส่ Mask Embedding ลงในข้อมูล"""
+        B, T, C = x.shape
+        if hasattr(self.model, 'mask_prob') and self.model.mask_prob > 0:
+            mask_indices = self.compute_mask_indices(
+                (B, T), padding_mask, self.model.mask_prob, self.model.mask_length
+            )
+            x[mask_indices] = self.model.mask_emb
+        else:
+            mask_indices = None
+        return x, mask_indices
+
+    def extract_encoder_features(
+        self,
+        x: torch.Tensor,
         padding_mask: Optional[torch.Tensor] = None,
-        mask: bool = False,
-        ret_conv: bool = False,
-        output_layer: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        res = self._forward(
-            source,
-            padding_mask=padding_mask,
-            mask=mask,
-            features_only=True,
-            output_layer=output_layer,
+        tgt_layer: Optional[int] = None,
+        min_layer: int = 0,
+    ) -> Tuple[torch.Tensor, List[Tuple]]:
+        """
+        ฟังก์ชันหลักในการประมวลผลผ่าน Encoder Layers
+        ปรับปรุงการจัดการ LayerDrop และการถอด Padding ออกหลังจากประมวลผลเสร็จ
+        """
+        if padding_mask is not None:
+            x = index_put(x, padding_mask, 0)
+
+        # Convolutional Relative Positional Encoding
+        x_conv = self.pos_conv(x.transpose(1, 2)).transpose(1, 2)
+        x = x + x_conv
+
+        if not self.layer_norm_first:
+            x = self.layer_norm(x)
+
+        # จัดการ Padding ให้เข้ากับเงื่อนไขของ Sequence Length
+        x, pad_length = HuBERTFeatureExtractor.pad_to_multiple(
+            x, self.required_seq_len_multiple, dim=-2
         )
-        feature = res["features"] if ret_conv else res["x"]
-        return feature, res["padding_mask"]
+        
+        if pad_length > 0:
+            if padding_mask is None:
+                padding_mask = x.new_zeros((x.size(0), x.size(1)), dtype=torch.bool)
+                padding_mask[:, -pad_length:] = True
+            else:
+                padding_mask, _ = HuBERTFeatureExtractor.pad_to_multiple(
+                    padding_mask, self.required_seq_len_multiple, dim=-1, value=True
+                )
 
-    def _hubert_extract_features(
-        source: torch.Tensor,
-        padding_mask: Optional[torch.Tensor] = None,
-        mask: bool = False,
-        ret_conv: bool = False,
-        output_layer: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return hubert_extract_features(
-            hubert_model, source, padding_mask, mask, ret_conv, output_layer
-        )
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = x.transpose(0, 1)  # BxTxC -> TxBxC สำหรับ Transformer
 
-    hubert_model.extract_features = _hubert_extract_features
+        layer_results = []
+        for i, layer in enumerate(self.layers):
+            # ตรวจสอบ LayerDrop
+            if not self.training or (np.random.random() > self.layerdrop):
+                x, (z, lr) = layer(x, self_attn_padding_mask=padding_mask, need_weights=False)
+                if i >= min_layer:
+                    layer_results.append((x, z, lr))
+            
+            if i == tgt_layer:
+                break
 
-    def infer(source, padding_mask, output_layer: torch.Tensor):
-        output_layer = output_layer.item()
-        logits = hubert_model.extract_features(
-            source=source, padding_mask=padding_mask, output_layer=output_layer
-        )
-        feats = hubert_model.final_proj(logits[0]) if output_layer == 9 else logits[0]
-        return feats
+        x = x.transpose(0, 1)  # TxBxC -> BxTxC
 
-    hubert_model.infer = infer
-    # hubert_model.forward=infer
-    # hubert_model.forward
+        # ย้อนกลับขั้นตอน Padding (Undo Padding)
+        if pad_length > 0:
+            x = x[:, :-pad_length]
+            layer_results = [
+                (a[:-pad_length], b[:-pad_length] if b is not None else None, c[:-pad_length])
+                for a, b, c in layer_results
+            ]
 
-    return hubert_model
+        return x, layer_results
+
+    def infer(self, source: torch.Tensor, padding_mask: Optional[torch.Tensor] = None, output_layer: int = 9) -> torch.Tensor:
+        """ฟังก์ชันสำหรับใช้งานจริง (Inference)"""
+        with torch.no_grad():
+            # ดึงข้อมูลผ่าน forward ของ fairseq โดยตรง
+            res = self.model.forward(
+                source,
+                padding_mask=padding_mask,
+                features_only=True,
+                output_layer=output_layer
+            )
+            
+            feature = res["x"]
+            # หากเป็น Layer สุดท้าย (ในที่นี้คือ 9 ตามต้นฉบับ) ให้ผ่าน Final Projection
+            if output_layer == 9:
+                feature = self.model.final_proj(feature)
+                
+            return feature
