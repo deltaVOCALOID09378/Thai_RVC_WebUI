@@ -10,8 +10,15 @@ from .attention import attention_init
 
 
 def ipex_init():  # pylint: disable=too-many-statements
+    """
+    ฟังก์ชันสับขาหลอก (Hijack) เพื่อให้ PyTorch ที่เขียนมาเพื่อ NVIDIA (CUDA) 
+    สามารถทำงานบนการ์ดจอ Intel (XPU) ได้อย่างไร้รอยต่อ
+    (Monkey-patching torch.cuda to torch.xpu for Intel GPU compatibility)
+    """
     try:
-        # Replace cuda with xpu:
+        # ==========================================
+        # แทนที่คำสั่งระบบพื้นฐาน (Replace cuda with xpu)
+        # ==========================================
         torch.cuda.current_device = torch.xpu.current_device
         torch.cuda.current_stream = torch.xpu.current_stream
         torch.cuda.device = torch.xpu.device
@@ -91,9 +98,10 @@ def ipex_init():  # pylint: disable=too-many-statements
         torch.cuda.CharStorage = torch.xpu.CharStorage
         torch.cuda.__file__ = torch.xpu.__file__
         torch.cuda._is_in_bad_fork = torch.xpu.lazy_init._is_in_bad_fork
-        # torch.cuda.is_current_stream_capturing = torch.xpu.is_current_stream_capturing
 
-        # Memory:
+        # ==========================================
+        # ระบบจัดการหน่วยความจำ (Memory Management)
+        # ==========================================
         torch.cuda.memory = torch.xpu.memory
         if "linux" in sys.platform and "WSL2" in os.popen("uname -a").read():
             torch.xpu.empty_cache = lambda: None
@@ -115,7 +123,9 @@ def ipex_init():  # pylint: disable=too-many-statements
             torch.xpu.reset_accumulated_memory_stats
         )
 
-        # RNG:
+        # ==========================================
+        # ระบบสุ่มตัวเลข (Random Number Generator: RNG)
+        # ==========================================
         torch.cuda.get_rng_state = torch.xpu.get_rng_state
         torch.cuda.get_rng_state_all = torch.xpu.get_rng_state_all
         torch.cuda.set_rng_state = torch.xpu.set_rng_state
@@ -126,7 +136,9 @@ def ipex_init():  # pylint: disable=too-many-statements
         torch.cuda.seed_all = torch.xpu.seed_all
         torch.cuda.initial_seed = torch.xpu.initial_seed
 
-        # AMP:
+        # ==========================================
+        # ระบบความแม่นยำผสม (Automatic Mixed Precision: AMP)
+        # ==========================================
         torch.cuda.amp = torch.xpu.amp
         if not hasattr(torch.cuda.amp, "common"):
             torch.cuda.amp.common = contextlib.nullcontext()
@@ -144,12 +156,14 @@ def ipex_init():  # pylint: disable=too-many-statements
             except Exception:  # pylint: disable=broad-exception-caught
                 torch.cuda.amp.GradScaler = ipex.cpu.autocast._grad_scaler.GradScaler
 
-        # C
+        # ==========================================
+        # การตั้งค่าพารามิเตอร์อื่นๆ (Other C & IPEX configs)
+        # ==========================================
         torch._C._cuda_getCurrentRawStream = ipex._C._getCurrentStream
         ipex._C._DeviceProperties.major = 2023
         ipex._C._DeviceProperties.minor = 2
 
-        # Fix functions with ipex:
+        # หลอกฟังก์ชันให้คืนค่าข้อมูลของ IPEX แทน (Fix functions with ipex)
         torch.cuda.mem_get_info = lambda device=None: [
             (
                 torch.xpu.get_device_properties(device).total_memory
@@ -168,6 +182,7 @@ def ipex_init():  # pylint: disable=too-many-statements
         torch.cuda.get_device_properties.minor = 7
         torch.cuda.ipc_collect = lambda *args, **kwargs: None
         torch.cuda.utilization = lambda *args, **kwargs: 0
+        
         if hasattr(torch.xpu, "getDeviceIdListForCard"):
             torch.cuda.getDeviceIdListForCard = torch.xpu.getDeviceIdListForCard
             torch.cuda.get_device_id_list_per_card = torch.xpu.getDeviceIdListForCard
@@ -185,6 +200,8 @@ def ipex_init():  # pylint: disable=too-many-statements
             ipex_diffusers()
         except Exception:  # pylint: disable=broad-exception-caught
             pass
+            
     except Exception as e:
         return False, e
+        
     return True, None
