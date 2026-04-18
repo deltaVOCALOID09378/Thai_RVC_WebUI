@@ -3,14 +3,20 @@ import intel_extension_for_pytorch as ipex  # pylint: disable=import-error, unus
 
 # pylint: disable=protected-access, missing-function-docstring, line-too-long
 
+# เก็บฟังก์ชันต้นฉบับไว้ก่อนทำการสับขาหลอก (Save original functions before monkey-patching)
 original_torch_bmm = torch.bmm
 
 
 def torch_bmm(input, mat2, *, out=None):
+    """
+    ฟังก์ชัน Batch Matrix-Matrix Multiplication (BMM) แบบแบ่งส่วน
+    (Memory-safe BMM for Intel ARC to bypass 4GB allocation limit)
+    """
     if input.dtype != mat2.dtype:
         mat2 = mat2.to(input.dtype)
 
-    # ARC GPUs can't allocate more than 4GB to a single block, Slice it:
+    # การ์ดจอ ARC ไม่สามารถจองหน่วยความจำเกิน 4GB ต่อบล็อกได้ จึงต้องคำนวณเพื่อหั่นแบ่ง
+    # (ARC GPUs can't allocate more than 4GB to a single block, Slice it)
     batch_size_attention, input_tokens, mat2_shape = (
         input.shape[0],
         input.shape[1],
@@ -20,10 +26,11 @@ def torch_bmm(input, mat2, *, out=None):
     slice_block_size = input_tokens * mat2_shape / 1024 / 1024 * block_multiply
     block_size = batch_size_attention * slice_block_size
 
+    # หั่นแบ่งตามขนาด Batch (Split by batch size)
     split_slice_size = batch_size_attention
     if block_size > 4:
         do_split = True
-        # Find something divisible with the input_tokens
+        # หาจุดที่หารลงตัวกับจำนวน input_tokens (Find something divisible with the input_tokens)
         while (split_slice_size * slice_block_size) > 4:
             split_slice_size = split_slice_size // 2
             if split_slice_size <= 1:
@@ -32,11 +39,11 @@ def torch_bmm(input, mat2, *, out=None):
     else:
         do_split = False
 
+    # หั่นแบ่งย่อยอีกขั้นถ้ายังใหญ่เกินไป (Second-level split by sequence length)
     split_2_slice_size = input_tokens
     if split_slice_size * slice_block_size > 4:
         slice_block_size2 = split_slice_size * mat2_shape / 1024 / 1024 * block_multiply
         do_split_2 = True
-        # Find something divisible with the input_tokens
         while (split_2_slice_size * slice_block_size2) > 4:
             split_2_slice_size = split_2_slice_size // 2
             if split_2_slice_size <= 1:
@@ -45,6 +52,7 @@ def torch_bmm(input, mat2, *, out=None):
     else:
         do_split_2 = False
 
+    # กระบวนการประมวลผลทีละส่วนและนำมาประกอบกัน
     if do_split:
         hidden_states = torch.zeros(
             input.shape[0],
@@ -78,13 +86,18 @@ def torch_bmm(input, mat2, *, out=None):
     return hidden_states
 
 
+# เก็บฟังก์ชันต้นฉบับไว้ (Save original attention function)
 original_scaled_dot_product_attention = torch.nn.functional.scaled_dot_product_attention
 
 
 def scaled_dot_product_attention(
     query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False
 ):
-    # ARC GPUs can't allocate more than 4GB to a single block, Slice it:
+    """
+    ฟังก์ชัน Scaled Dot-Product Attention แบบแบ่งส่วน
+    (Memory-safe Attention for Intel ARC to bypass 4GB allocation limit)
+    """
+    # การ์ดจอ ARC ไม่สามารถจองหน่วยความจำเกิน 4GB ต่อบล็อกได้
     if len(query.shape) == 3:
         batch_size_attention, query_tokens, shape_four = query.shape
         shape_one = 1
@@ -99,10 +112,10 @@ def scaled_dot_product_attention(
     )
     block_size = batch_size_attention * slice_block_size
 
+    # หั่นแบ่งตามขนาด Batch (Split by batch size)
     split_slice_size = batch_size_attention
     if block_size > 4:
         do_split = True
-        # Find something divisible with the shape_one
         while (split_slice_size * slice_block_size) > 4:
             split_slice_size = split_slice_size // 2
             if split_slice_size <= 1:
@@ -111,13 +124,13 @@ def scaled_dot_product_attention(
     else:
         do_split = False
 
+    # หั่นแบ่งย่อยขั้นที่ 2 (Second-level split)
     split_2_slice_size = query_tokens
     if split_slice_size * slice_block_size > 4:
         slice_block_size2 = (
             shape_one * split_slice_size * shape_four / 1024 / 1024 * block_multiply
         )
         do_split_2 = True
-        # Find something divisible with the batch_size_attention
         while (split_2_slice_size * slice_block_size2) > 4:
             split_2_slice_size = split_2_slice_size // 2
             if split_2_slice_size <= 1:
@@ -213,6 +226,10 @@ def scaled_dot_product_attention(
 
 
 def attention_init():
-    # ARC GPUs can't allocate more than 4GB to a single block:
+    """
+    ฟังก์ชันเริ่มต้นเพื่อเข้าควบคุมการคำนวณ Attention 
+    (Initialize Monkey-patch for Intel ARC GPUs)
+    """
+    # แทนที่ฟังก์ชันดั้งเดิมด้วยฟังก์ชันที่เขียนขึ้นมาใหม่
     torch.bmm = torch_bmm
     torch.nn.functional.scaled_dot_product_attention = scaled_dot_product_attention
