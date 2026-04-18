@@ -11,6 +11,9 @@ i18n = I18nAuto()
 
 
 def savee(ckpt, sr, if_f0, name, epoch, version, hps):
+    """
+    บันทึกจุดตรวจสอบ (Save Checkpoint) ระหว่างการเทรน
+    """
     try:
         opt = OrderedDict()
         opt["weight"] = {}
@@ -43,15 +46,18 @@ def savee(ckpt, sr, if_f0, name, epoch, version, hps):
         opt["f0"] = if_f0
         opt["version"] = version
         torch.save(opt, "assets/weights/%s.pth" % name)
-        return "Success."
+        return "✅ สำเร็จ (Success.)"
     except:
         return traceback.format_exc()
 
 
 def show_info(path):
+    """
+    แสดงข้อมูลของไฟล์โมเดล (Show Model Info)
+    """
     try:
         a = torch.load(path, map_location="cpu")
-        return "模型信息:%s\n采样率:%s\n模型是否输入音高引导:%s\n版本:%s" % (
+        return "ข้อมูลโมเดล (Model Info): %s\nอัตราสุ่มตัวอย่าง (Sample Rate): %s\nใช้การชี้นำระดับเสียง (Pitch Guidance): %s\nเวอร์ชัน (Version): %s" % (
             a.get("info", "None"),
             a.get("sr", "None"),
             a.get("f0", "None"),
@@ -62,6 +68,10 @@ def show_info(path):
 
 
 def extract_small_model(path, name, sr, if_f0, info, version):
+    """
+    ดึงเฉพาะโมเดลย่อยที่จำเป็นสำหรับการนำไปใช้งาน (Extract Inference Model)
+    ช่วยลดขนาดไฟล์ .pth ให้เล็กลง
+    """
     try:
         ckpt = torch.load(path, map_location="cpu")
         if "model" in ckpt:
@@ -180,32 +190,37 @@ def extract_small_model(path, name, sr, if_f0, info, version):
                     32000,
                 ]
         if info == "":
-            info = "Extracted model."
+            info = "ดึงโมเดลย่อยเรียบร้อยแล้ว (Extracted model.)"
         opt["info"] = info
         opt["version"] = version
         opt["sr"] = sr
         opt["f0"] = int(if_f0)
         torch.save(opt, "assets/weights/%s.pth" % name)
-        return "Success."
+        return "✅ สำเร็จ (Success.)"
     except:
         return traceback.format_exc()
 
 
 def change_info(path, info, name):
+    """
+    แก้ไขข้อมูลรายละเอียดของไฟล์โมเดล (Change Model Info)
+    """
     try:
         ckpt = torch.load(path, map_location="cpu")
         ckpt["info"] = info
         if name == "":
             name = os.path.basename(path)
         torch.save(ckpt, "assets/weights/%s" % name)
-        return "Success."
+        return "✅ สำเร็จ (Success.)"
     except:
         return traceback.format_exc()
 
 
 def merge(path1, path2, alpha1, sr, f0, info, name, version):
+    """
+    ผสานโมเดลสองตัวเข้าด้วยกัน (Merge Models)
+    """
     try:
-
         def extract(ckpt):
             a = ckpt["model"]
             opt = OrderedDict()
@@ -227,12 +242,13 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
             ckpt2 = extract(ckpt2)
         else:
             ckpt2 = ckpt2["weight"]
+            
         if sorted(list(ckpt1.keys())) != sorted(list(ckpt2.keys())):
-            return "Fail to merge the models. The model architectures are not the same."
+            return "❌ การผสานล้มเหลว: โครงสร้างของโมเดลทั้งสองไม่ตรงกัน (Fail to merge. Model architectures are not the same.)"
+            
         opt = OrderedDict()
         opt["weight"] = {}
         for key in ckpt1.keys():
-            # try:
             if key == "emb_g.weight" and ckpt1[key].shape != ckpt2[key].shape:
                 min_shape0 = min(ckpt1[key].shape[0], ckpt2[key].shape[0])
                 opt["weight"][key] = (
@@ -243,19 +259,15 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
                 opt["weight"][key] = (
                     alpha1 * (ckpt1[key].float()) + (1 - alpha1) * (ckpt2[key].float())
                 ).half()
-        # except:
-        #     pdb.set_trace()
+
         opt["config"] = cfg
-        """
-        if(sr=="40k"):opt["config"] = [1025, 32, 192, 192, 768, 2, 6, 3, 0, "1", [3, 7, 11], [[1, 3, 5], [1, 3, 5], [1, 3, 5]], [10, 10, 2, 2], 512, [16, 16, 4, 4,4], 109, 256, 40000]
-        elif(sr=="48k"):opt["config"] = [1025, 32, 192, 192, 768, 2, 6, 3, 0, "1", [3, 7, 11], [[1, 3, 5], [1, 3, 5], [1, 3, 5]], [10,6,2,2,2], 512, [16, 16, 4, 4], 109, 256, 48000]
-        elif(sr=="32k"):opt["config"] = [513, 32, 192, 192, 768, 2, 6, 3, 0, "1", [3, 7, 11], [[1, 3, 5], [1, 3, 5], [1, 3, 5]], [10, 4, 2, 2, 2], 512, [16, 16, 4, 4,4], 109, 256, 32000]
-        """
         opt["sr"] = sr
-        opt["f0"] = 1 if f0 == i18n("是") else 0
+        
+        # แก้ไขบัคภาษาจีน รองรับ Input แบบสากล (Fixed F0 parsing bug)
+        opt["f0"] = 1 if str(f0).lower() in ["yes", "ใช่", "1", "true"] else 0
         opt["version"] = version
         opt["info"] = info
         torch.save(opt, "assets/weights/%s.pth" % name)
-        return "Success."
+        return "✅ สำเร็จ (Success.)"
     except:
         return traceback.format_exc()
