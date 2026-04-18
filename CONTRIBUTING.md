@@ -1,11 +1,5 @@
-# 贡献规则
-1. 一般来说，作者`@RVC-Boss`将拒绝所有的算法更改，除非它是为了修复某个代码层面的错误或警告
-2. 您可以贡献本仓库的其他位置，如翻译和WebUI，但请尽量作最小更改
-3. 所有更改都需要由`@RVC-Boss`批准，因此您的PR可能会被搁置
-4. 由此带来的不便请您谅解
-
-# Contributing Rules
-1. Generally, the author `@RVC-Boss` will reject all algorithm changes unless what is to fix a code-level error or warning.
-2. You can contribute to other parts of this repo like translations and WebUI, but please minimize your changes as much as possible.
-3. All changes need to be approved by `@RVC-Boss`, so your PR may be put on hold.
-4. Please accept our apologies for any inconvenience caused.
+# กฎระเบียบในการร่วมสมทบ (Contributing Rules)
+1. โดยทั่วไปแล้ว ผู้สร้าง `@RVC-Boss` จะปฏิเสธการเปลี่ยนแปลงอัลกอริทึมทั้งหมด ยกเว้นแต่ว่าการเปลี่ยนแปลงนั้นจะเป็นไปเพื่อการแก้ไขข้อผิดพลาด (Error) หรือคำเตือน (Warning) ในระดับโค้ด
+2. คุณสามารถร่วมสมทบ (Contribute) ในส่วนอื่นๆ ของ Repository นี้ได้ เช่น การแปลภาษา และ WebUI แต่กรุณาทำการเปลี่ยนแปลงให้น้อยที่สุดเท่าที่จะทำได้
+3. การเปลี่ยนแปลงทั้งหมดจำเป็นต้องได้รับการอนุมัติจาก `@RVC-Boss` ดังนั้น PR (Pull Request) ของคุณอาจถูกระงับหรือต้องรอดำเนินการไว้ก่อน
+4. ขออภัยในความไม่สะดวกที่อาจเกิดขึ้นมา ณ ที่นี้
