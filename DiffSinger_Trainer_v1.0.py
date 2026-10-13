@@ -73,6 +73,7 @@ def find_python(root):
 # -------------------------------------------------------------------- GUI ---
 class TrainerApp(tk.Tk):
     def __init__(self, initial_root=""):
+        """Initialize the trainer window, hardware settings, and log polling."""
         super().__init__()
         self.title(APP_TITLE)
         self.geometry("920x720")
@@ -103,6 +104,7 @@ class TrainerApp(tk.Tk):
 
     # ---- UI
     def _build(self):
+        """Create project inputs, hardware controls, task buttons, and the log view."""
         pad = {"padx": 6, "pady": 4}
         top = ttk.LabelFrame(self, text="โปรเจกต์ / Project")
         top.pack(fill="x", padx=8, pady=6)
@@ -171,6 +173,7 @@ class TrainerApp(tk.Tk):
 
     # ---- init / events
     def _init_gpu(self):
+        """Populate the GPU selector and apply defaults for its first entry."""
         if self.gpus:
             vals = [f"{i}: {n} ({m} MB)" for i, n, m in self.gpus]
         else:
@@ -180,6 +183,7 @@ class TrainerApp(tk.Tk):
         self.apply_auto()
 
     def apply_auto(self):
+        """Set and log batch and precision defaults for the selected GPU or CPU."""
         vram = 0
         sel = self.cb_gpu.current()
         if self.gpus and 0 <= sel < len(self.gpus):
@@ -191,6 +195,7 @@ class TrainerApp(tk.Tk):
         self.say(f"[AUTO] VRAM={vram} MB -> frames={frames}, batch={bsize}, precision={prec}")
 
     def on_root_changed(self):
+        """Normalize the project path and select its Python and config if valid."""
         root = self.v_root.get().strip().strip('"')
         self.v_root.set(root)
         if os.path.isdir(root):
@@ -198,23 +203,27 @@ class TrainerApp(tk.Tk):
             self.default_cfg()
 
     def default_cfg(self):
+        """Select the model type's default config when it exists in the project."""
         root = self.v_root.get()
         cand = os.path.join(root, "configs", f"{self.v_type.get()}.yaml")
         if os.path.isfile(cand):
             self.v_cfg.set(cand)
 
     def pick_root(self):
+        """Choose a project folder and refresh its Python and config paths."""
         d = filedialog.askdirectory(title="เลือกโฟลเดอร์ DiffSinger / Select DiffSinger folder")
         if d:
             self.v_root.set(d)
             self.on_root_changed()
 
     def pick_python(self):
+        """Choose a Python executable and update the field unless cancelled."""
         f = filedialog.askopenfilename(title="Python executable", filetypes=[("python.exe", "*.exe")])
         if f:
             self.v_python.set(f)
 
     def pick_cfg(self):
+        """Choose a YAML config from a file dialog opened at the project folder."""
         f = filedialog.askopenfilename(title="Config", filetypes=[("YAML", "*.yaml *.yml")],
                                        initialdir=self.v_root.get() or None)
         if f:
@@ -222,10 +231,12 @@ class TrainerApp(tk.Tk):
 
     # ---- logging
     def say(self, text):
+        """Queue a message for the GUI log and print it to stdout immediately."""
         self.log_q.put(text + "\n")
         print(text, flush=True)
 
     def _drain_log(self):
+        """Append queued messages to the log view and schedule the next poll."""
         try:
             while True:
                 chunk = self.log_q.get_nowait()
@@ -239,6 +250,11 @@ class TrainerApp(tk.Tk):
 
     # ---- process control
     def _validate(self, need_cfg=True):
+        """Return the project path, or show an error and return None if invalid.
+
+        Require a scripts directory and experiment name, plus an existing
+        config file when need_cfg is True.
+        """
         root = self.v_root.get().strip()
         if not os.path.isdir(os.path.join(root, "scripts")):
             messagebox.showerror("Error", "ไม่พบโฟลเดอร์ scripts ใน DiffSinger\n"
@@ -253,6 +269,7 @@ class TrainerApp(tk.Tk):
         return root
 
     def _env(self, root):
+        """Copy the environment with project imports, UTF-8, and any selected GPU."""
         env = os.environ.copy()
         env["PYTHONPATH"] = root + os.pathsep + env.get("PYTHONPATH", "")
         env["PYTHONIOENCODING"] = "utf-8"
@@ -262,6 +279,11 @@ class TrainerApp(tk.Tk):
         return env
 
     def run_cmd(self, cmd, root, label):
+        """Run a command in a daemon thread with output and status updates.
+
+        Use root as the working directory and label for progress messages;
+        show a warning and return if a tracked task is still running.
+        """
         if self.proc and self.proc.poll() is None:
             messagebox.showwarning("Busy", "มีงานกำลังทำงานอยู่\nA task is already running.")
             return
@@ -269,6 +291,7 @@ class TrainerApp(tk.Tk):
         self.status.set(f"กำลังทำงาน / Running: {label}")
 
         def worker():
+            """Launch the subprocess, stream its output, and report exit or error."""
             try:
                 self.proc = subprocess.Popen(
                     cmd, cwd=root, env=self._env(root), stdout=subprocess.PIPE,
@@ -286,12 +309,14 @@ class TrainerApp(tk.Tk):
         threading.Thread(target=worker, daemon=True).start()
 
     def do_binarize(self):
+        """Validate the project and run data binarization with the chosen config."""
         root = self._validate()
         if root:
             self.run_cmd([self.v_python.get(), "scripts/binarize.py", "--config", self.v_cfg.get()],
                          root, "Binarize / เตรียมข้อมูล")
 
     def do_train(self):
+        """Validate and launch training with batch, precision, and reset settings."""
         root = self._validate()
         if not root:
             return
@@ -307,12 +332,14 @@ class TrainerApp(tk.Tk):
         self.run_cmd(cmd, root, "Training / เทรนโมเดล")
 
     def do_export(self):
+        """Validate the project and launch ONNX export for the chosen experiment."""
         root = self._validate(need_cfg=False)
         if root:
             self.run_cmd([self.v_python.get(), "scripts/export.py", self.v_type.get(),
                           "--exp", self.v_exp.get().strip()], root, "Export ONNX / ส่งออก ONNX")
 
     def do_stop(self):
+        """Force-stop the tracked task's Windows process tree and update status."""
         if self.proc and self.proc.poll() is None:
             subprocess.call(["taskkill", "/PID", str(self.proc.pid), "/T", "/F"],
                             creationflags=NO_WINDOW, stdout=subprocess.DEVNULL,
@@ -321,6 +348,7 @@ class TrainerApp(tk.Tk):
             self.status.set("หยุดแล้ว / Stopped")
 
     def do_tensorboard(self):
+        """Open an existing TensorBoard process or start one for the experiment."""
         root = self._validate(need_cfg=False)
         if not root:
             return
@@ -339,6 +367,7 @@ class TrainerApp(tk.Tk):
             self.say(f"[ERROR] TensorBoard: {e}")
 
     def on_close(self):
+        """Kill active task and TensorBoard process trees, then destroy the window."""
         for p in (self.proc, self.tb_proc):
             if p and p.poll() is None:
                 subprocess.call(["taskkill", "/PID", str(p.pid), "/T", "/F"],
