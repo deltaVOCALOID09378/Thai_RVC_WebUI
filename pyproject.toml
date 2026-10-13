@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "rvc-beta"
+name = "Thai RVC"
 version = "0.1.0"
 description = ""
-authors = ["lj1995"]
+authors = ["DELTA SYNTH"]
 license = "MIT"
 
 [tool.poetry.dependencies]
