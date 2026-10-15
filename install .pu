@@ -1,0 +1,57 @@
+@echo off
+title 🛠️ DELTA SYNTH Environment Installer
+color 0A
+cd /d "%~dp0"
+
+echo ===============================================================
+echo 🌟 DELTA SYNTH - Universal Environment Auto Installer 🌟
+echo ===============================================================
+echo ℹ️  This script will install all necessary global tools and
+echo ℹ️  required local packages for the RVC environment.
+echo.
+pause
+
+echo.
+echo ===============================================================
+echo 📥 [1/3] Installing Global Tools (Python, Git, FFmpeg)
+echo ===============================================================
+winget install -e --id Python.Python.3.10 --accept-source-agreements --accept-package-agreements
+winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
+winget install -e --id Gyan.FFmpeg --accept-source-agreements --accept-package-agreements
+
+echo.
+echo ===============================================================
+echo ⚙️  [2/3] Setting up Python Environment
+echo ===============================================================
+runtime\python.exe -m pip install --upgrade pip
+
+echo.
+echo ===============================================================
+echo 📦 [3/3] Installing All Dependencies (Universal Support)
+echo ===============================================================
+runtime\python.exe -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+if exist "requirements.txt" (
+    echo 🔄 Installing standard requirements...
+    runtime\python.exe -m pip install -r requirements.txt
+)
+if exist "requirements-amd.txt" (
+    echo 🔄 Installing AMD requirements...
+    runtime\python.exe -m pip install -r requirements-amd.txt
+)
+if exist "requirements-dml.txt" (
+    echo 🔄 Installing DML requirements...
+    runtime\python.exe -m pip install -r requirements-dml.txt
+)
+if exist "requirements-ipex.txt" (
+    echo 🔄 Installing IPEX requirements...
+    runtime\python.exe -m pip install -r requirements-ipex.txt
+)
+
+echo.
+color 0E
+echo ===============================================================
+echo ✅ Installation Completed Successfully!
+echo ===============================================================
+pause
+exit

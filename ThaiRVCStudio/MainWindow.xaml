@@ -1,0 +1,538 @@
+<Window x:Class="ThaiRVCStudio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ThaiRVCStudio"
+        mc:Ignorable="d"
+        Title="Thai RVC Studio - DELTA SYNTH Edition (Thai RVC + DiffSinger + OpenUtau)" 
+        Height="840" Width="1240" MinHeight="700" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrushDarkBackground}"
+        FontFamily="{StaticResource MainFontFamily}">
+
+    <Grid>
+        <!-- Layout Grid: Header (Row 0), Main Area (Row 1), Bottom Log (Row 3) -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="180" MinHeight="100" MaxHeight="400" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================================================================== -->
+        <!-- HEADER BAR -->
+        <!-- ============================================================================== -->
+        <Border Grid.Row="0" Background="{StaticResource BrushCardBackground}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="18,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="38" Height="38" Background="{StaticResource BrushAccentRed}" CornerRadius="8" Margin="0,0,12,0">
+                        <TextBlock Text="⚡" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="THAI RVC + DIFFSINGER + OPENUTAU STUDIO" FontWeight="Bold" FontSize="15" Foreground="{StaticResource BrushTextWhite}" />
+                        <TextBlock Text="ระบบสตูดิโอเสียงอัจฉริยะ (DELTA SYNTH Edition v1.8)" FontSize="12" Foreground="{StaticResource BrushTextMuted}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Engine Health & Quick Actions -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Status Badge -->
+                    <Border x:Name="EngineStatusBorder" Background="#263A29" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" CornerRadius="14" Padding="12,5" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource BrushSuccessGreen}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtStatus" Text="Engine: พร้อมใช้งาน (Port 9378)" FontSize="12" Foreground="{StaticResource BrushTextWhite}" FontWeight="Medium" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Header Buttons -->
+                    <Button x:Name="BtnRefreshModels" Content="🔄 รีเฟรช (Refresh)" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnRefreshModels_Click" />
+                    <Button x:Name="BtnStartServer" Content="▶️ เริ่ม Engine" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnStartServer_Click" />
+                    <Button x:Name="BtnStopServer" Content="⏹️ หยุด" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnStopServer_Click" />
+                    <Button x:Name="BtnOpenBrowser" Content="🌐 เปิด WebUI" Style="{StaticResource ModernButtonStyle}" Click="BtnOpenBrowser_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================================================================== -->
+        <!-- MAIN WORKSPACE: TAB NAVIGATION & PANELS -->
+        <!-- ============================================================================== -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="10,10,10,0">
+            <!-- TAB 1: MODEL INFERENCE (แปลงเสียง) -->
+            <TabItem Header="🎙️ แปลงเสียง (Voice Conversion)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="380" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left Column: Model & Parameters -->
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <GroupBox Header="1. เลือกโมเดลเสียง (Model Selection)">
+                                <StackPanel>
+                                    <TextBlock Text="ชื่อโมเดลเสียง (Voice Model):" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="CmbInferenceModel" Margin="0,0,0,10" SelectionChanged="CmbInferenceModel_SelectionChanged" />
+
+                                    <TextBlock Text="ไฟล์ดัชนีคุณลักษณะ (Index Path):" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="CmbInferenceIndex" Margin="0,0,0,5" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="2. พารามิเตอร์ระดับเสียง (Pitch &amp; F0 Settings)">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,4">
+                                        <TextBlock Text="ปรับคีย์เสียง (Pitch Shift):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtPitchVal" Text="0 Semitones" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" FontWeight="Bold" />
+                                    </Grid>
+                                    <Slider x:Name="SliderPitch" Minimum="-24" Maximum="24" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderPitch_ValueChanged" Margin="0,0,0,10" />
+
+                                    <TextBlock Text="อัลกอริทึมสกัด F0 (Pitch Algorithm):" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="CmbF0Method" Margin="0,0,0,5">
+                                        <ComboBoxItem Content="rmvpe (แนะนำสูงสุด / Best Quality)" IsSelected="True" />
+                                        <ComboBoxItem Content="pm (เร็วที่สุด / Fast)" />
+                                        <ComboBoxItem Content="harvest (แม่นยำสูง / High Accuracy)" />
+                                        <ComboBoxItem Content="dio (มาตรฐาน / Standard)" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="3. ปรับแต่งคุณภาพขั้นสูง (Advanced Audio Tuning)">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,2">
+                                        <TextBlock Text="อัตราดึงฟีเจอร์ Index (Search Feature Rate):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtIndexRateVal" Text="0.75" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" />
+                                    </Grid>
+                                    <Slider x:Name="SliderIndexRate" Minimum="0" Maximum="1" Value="0.75" SmallChange="0.05" ValueChanged="SliderIndexRate_ValueChanged" Margin="0,0,0,8" />
+
+                                    <Grid Margin="0,0,0,2">
+                                        <TextBlock Text="เกลี่ยระดับพลังงานเสียง (RMS Mix Rate):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtRmsMixVal" Text="0.25" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" />
+                                    </Grid>
+                                    <Slider x:Name="SliderRmsMix" Minimum="0" Maximum="1" Value="0.25" SmallChange="0.05" ValueChanged="SliderRmsMix_ValueChanged" Margin="0,0,0,8" />
+
+                                    <Grid Margin="0,0,0,2">
+                                        <TextBlock Text="ปกป้องพยัญชนะและลมหายใจ (Protect Rate):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtProtectVal" Text="0.33" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" />
+                                    </Grid>
+                                    <Slider x:Name="SliderProtect" Minimum="0" Maximum="0.5" Value="0.33" SmallChange="0.02" ValueChanged="SliderProtect_ValueChanged" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <!-- Right Column: Input Audio & Process Control -->
+                        <StackPanel Grid.Column="1">
+                            <GroupBox Header="4. ไฟล์เสียงต้นฉบับ (Audio Input)">
+                                <StackPanel>
+                                    <TextBlock Text="เลือกไฟล์เสียงที่ต้องการแปลง (.wav, .mp3, .flac):" Margin="0,0,0,5" />
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtInputAudioPath" Grid.Column="0" Margin="0,0,8,0" Text="B:\Export to UTAU\Test2.wav" />
+                                        <Button x:Name="BtnBrowseAudio" Grid.Column="1" Content="📁 เลือกไฟล์..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseAudio_Click" />
+                                    </Grid>
+
+                                    <!-- Drag and Drop Box -->
+                                    <Border Background="#202020" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1.5" CornerRadius="8" Height="100" AllowDrop="True" Drop="AudioDropBox_Drop" DragOver="AudioDropBox_DragOver">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="📥 ลากและวางไฟล์เสียงลงที่นี่ (Drag &amp; Drop Audio Here)" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextWhite}" />
+                                            <TextBlock Text="รองรับ WAV, MP3, FLAC, M4A, OGG" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="5. เริ่มต้นการแปลงเสียง (Execute Conversion)">
+                                <StackPanel>
+                                    <TextBlock Text="โฟลเดอร์สำหรับส่งออกผลลัพธ์ (Export Directory):" Margin="0,0,0,5" />
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtExportAudioDir" Grid.Column="0" Margin="0,0,8,0" Text="B:\Render file to UTAU" />
+                                        <Button x:Name="BtnBrowseExportDir" Grid.Column="1" Content="📂 เลือกโฟลเดอร์..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseExportDir_Click" />
+                                    </Grid>
+
+                                    <Button x:Name="BtnConvertSingle" Content="🚀 เริ่มต้นแปลงเสียง (Start Voice Conversion)" Style="{StaticResource ModernButtonStyle}" Height="45" FontSize="14" Click="BtnConvertSingle_Click" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 2: UVR5 (แยกเสียงร้องและดนตรี) -->
+            <TabItem Header="🎧 แยกเสียงร้อง UVR5 (Vocal Separation)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="450" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <GroupBox Header="ตั้งค่าโมเดล UVR5 (UVR5 Separation Setup)">
+                                <StackPanel>
+                                    <TextBlock Text="เลือกโมเดล UVR5 (Model):" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="CmbUvrModel" Margin="0,0,0,12" />
+
+                                    <TextBlock Text="รูปแบบการส่งออกไฟล์ (Export Format):" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="CmbUvrFormat" Margin="0,0,0,12">
+                                        <ComboBoxItem Content="wav (ไม่บีบอัด คุณภาพสตูดิโอ)" IsSelected="True" />
+                                        <ComboBoxItem Content="flac (Lossless)" />
+                                        <ComboBoxItem Content="mp3 (บีบอัด ขนาดกะทัดรัด)" />
+                                        <ComboBoxItem Content="m4a (AAC)" />
+                                    </ComboBox>
+
+                                    <Grid Margin="0,0,0,4">
+                                        <TextBlock Text="ระดับความเข้มข้นในการแยกเสียง (Aggressiveness):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtUvrAggVal" Text="10" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" FontWeight="Bold" />
+                                    </Grid>
+                                    <Slider x:Name="SliderUvrAgg" Minimum="0" Maximum="50" Value="10" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderUvrAgg_ValueChanged" Margin="0,0,0,15" />
+
+                                    <Button x:Name="BtnRunUvr" Content="✂️ เริ่มต้นแยกเสียงร้องและดนตรี (Run Separation)" Style="{StaticResource ModernButtonStyle}" Height="45" FontSize="14" Click="BtnRunUvr_Click" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <GroupBox Header="เส้นทางไฟล์และโฟลเดอร์ส่งออก (Paths)">
+                                <StackPanel>
+                                    <TextBlock Text="ไฟล์เสียงหรือโฟลเดอร์ต้นทาง (Input Path):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtUvrInputPath" Grid.Column="0" Margin="0,0,8,0" Text="B:\Render file to UTAU" />
+                                        <Button x:Name="BtnBrowseUvrInput" Grid.Column="1" Content="📁 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseUvrInput_Click" />
+                                    </Grid>
+
+                                    <TextBlock Text="โฟลเดอร์จัดเก็บเสียงร้อง (Vocal Output Dir):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtUvrVocalDir" Margin="0,0,0,12" Text="B:\Render file to UTAU\Vocals" />
+
+                                    <TextBlock Text="โฟลเดอร์จัดเก็บเสียงดนตรี (Instrumental Output Dir):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtUvrInsDir" Margin="0,0,0,12" Text="B:\Render file to UTAU\Instrumentals" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 3: RVC TRAINING (ฝึกสอนโมเดล) -->
+            <TabItem Header="🏋️ ฝึกสอนโมเดล RVC (RVC Training)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="420" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Training Configs -->
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <GroupBox Header="พารามิเตอร์การฝึกสอน (Training Configuration)">
+                                <StackPanel>
+                                    <TextBlock Text="ชื่อการทดลอง / ชื่อโมเดล (Experiment Name):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtTrainExpName" Margin="0,0,0,10" Text="My_Voice_Model" />
+
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="Sample Rate:" Margin="0,0,0,4" />
+                                            <ComboBox x:Name="CmbTrainSr">
+                                                <ComboBoxItem Content="40k (แนะนำ)" IsSelected="True" />
+                                                <ComboBoxItem Content="48k" />
+                                                <ComboBoxItem Content="32k" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="สถาปัตยกรรม (Version):" Margin="0,0,0,4" />
+                                            <ComboBox x:Name="CmbTrainVersion">
+                                                <ComboBoxItem Content="v2 (แนะนำสูงสุด)" IsSelected="True" />
+                                                <ComboBoxItem Content="v1" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="Batch Size:" Margin="0,0,0,4" />
+                                            <TextBox x:Name="TxtBatchSize" Text="8" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="จำนวน Epochs:" Margin="0,0,0,4" />
+                                            <TextBox x:Name="TxtTotalEpochs" Text="50" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="โฟลเดอร์ชุดข้อมูลเสียง (Dataset Directory):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtTrainDatasetDir" Grid.Column="0" Margin="0,0,8,0" Text="B:\For OpenUtau VB Making" />
+                                        <Button x:Name="BtnBrowseDataset" Grid.Column="1" Content="📁 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseDataset_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <!-- Action Pipeline Buttons -->
+                        <StackPanel Grid.Column="1">
+                            <GroupBox Header="ขั้นตอนดำเนินการฝึกสอนโมเดล (Training Execution Pipeline)">
+                                <StackPanel>
+                                    <Border Background="#252A20" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอน 0: ตรวจสอบและทำความสะอาดดาต้าเซ็ตเสียง (Data Autocleaning)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="ล้างไฟล์ขยะระบบ, ขจัดไฟตรง DC Offset, คุม Peak ที่ -1.0 dBFS และตัดเสียงเงียบอัตโนมัติ" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnAutocleanRvc" Grid.Column="1" Content="🧹 ทำความสะอาดข้อมูลเสียง" Style="{StaticResource ModernButtonStyle}" Click="BtnAutocleanRvc_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอน 1: เตรียมและตัดต่อข้อมูลเสียง (Preprocess Dataset)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="หั่นไฟล์เสียงตามค่าความถี่และขจัดเสียงคลิกตามมาตรฐานสตูดิโอ" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnTrainPreprocess" Grid.Column="1" Content="1️⃣ เริ่มต้น Preprocess" Style="{StaticResource SecondaryButtonStyle}" Click="BtnTrainPreprocess_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอน 2: สกัดฟีเจอร์ระดับเสียงและ HuBERT (Extract Features)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="สกัด F0 (Pitch) และการแสดงคุณลักษณะของเนื้อเสียงด้วยโมเดล HuBERT" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnTrainExtract" Grid.Column="1" Content="2️⃣ สกัดฟีเจอร์" Style="{StaticResource SecondaryButtonStyle}" Click="BtnTrainExtract_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอน 3: ฝึกสอนโมเดล RVC (Train Model)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="ฝึกสอนโครงข่ายประสาทเทียม Generator และ Discriminator" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnTrainModel" Grid.Column="1" Content="3️⃣ เริ่มการฝึกสอนโมเดล" Style="{StaticResource ModernButtonStyle}" Click="BtnTrainModel_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอน 4: สร้างดัชนีคุณลักษณะเสียง (Train Feature Index)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="สร้างไฟล์ .index ผ่าน FAISS เพื่อเสริมความชัดเจนและคงเนื้อเสียงเดิม" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnTrainIndex" Grid.Column="1" Content="4️⃣ สร้าง Index" Style="{StaticResource SecondaryButtonStyle}" Click="BtnTrainIndex_Click" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 4: CHECKPOINT PROCESSING & ONNX -->
+            <TabItem Header="🛠️ จัดการโมเดล (Checkpoint &amp; ONNX)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Model Extraction & Fusion -->
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <GroupBox Header="1. การสกัดโมเดลพร้อมใช้งาน (Model Extraction)">
+                                <StackPanel>
+                                    <TextBlock Text="เลือกไฟล์ Checkpoint สำหรับการสกัด (G_*.pth):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtCkptPath" Margin="0,0,0,8" Text="logs/My_Voice_Model/G_2333333.pth" />
+                                    <TextBlock Text="ชื่อโมเดลส่งออก (Extracted Model Name):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtExtractedName" Margin="0,0,0,10" Text="My_Voice_Extracted" />
+                                    <Button x:Name="BtnExtractSmall" Content="💾 สกัดโมเดลพร้อมใช้งาน (.pth)" Style="{StaticResource ModernButtonStyle}" Click="BtnExtractSmall_Click" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="2. การรวมน้ำหนักโมเดล (Model Fusion / Blend)">
+                                <StackPanel>
+                                    <TextBlock Text="โมเดล A (Model A):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtMergeModelA" Margin="0,0,0,8" Text="assets/weights/ModelA.pth" />
+                                    <TextBlock Text="โมเดล B (Model B):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtMergeModelB" Margin="0,0,0,8" Text="assets/weights/ModelB.pth" />
+                                    <Grid Margin="0,0,0,4">
+                                        <TextBlock Text="อัตราส่วนการรวมโมเดล A (Alpha):" HorizontalAlignment="Left" />
+                                        <TextBlock x:Name="TxtMergeAlphaVal" Text="0.50" HorizontalAlignment="Right" Foreground="{StaticResource BrushAccentRedHover}" FontWeight="Bold" />
+                                    </Grid>
+                                    <Slider x:Name="SliderMergeAlpha" Minimum="0" Maximum="1" Value="0.5" SmallChange="0.05" ValueChanged="SliderMergeAlpha_ValueChanged" Margin="0,0,0,10" />
+                                    <Button x:Name="BtnMergeModels" Content="🧬 ทำการหลอมรวมโมเดล (Merge Weights)" Style="{StaticResource SecondaryButtonStyle}" Click="BtnMergeModels_Click" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <!-- ONNX Export & Metadata -->
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                            <GroupBox Header="3. การส่งออกเป็น ONNX (Export to ONNX)">
+                                <StackPanel>
+                                    <TextBlock Text="เลือกไฟล์โมเดล RVC (.pth):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtOnnxSourceModel" Margin="0,0,0,8" Text="assets/weights/My_Voice_Model.pth" />
+                                    <TextBlock Text="ตำแหน่งไฟล์ส่งออก (.onnx):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtOnnxExportPath" Margin="0,0,0,12" Text="assets/weights/My_Voice_Model.onnx" />
+                                    <Button x:Name="BtnExportOnnx" Content="📦 ส่งออกเป็น ONNX Format" Style="{StaticResource ModernButtonStyle}" Click="BtnExportOnnx_Click" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="4. ตรวจสอบข้อมูลโมเดล (Model Information)">
+                                <StackPanel>
+                                    <TextBlock Text="ตรวจสอบคุณลักษณะของโมเดล (Inspection):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtInspectModelPath" Margin="0,0,0,8" Text="assets/weights/My_Voice_Model.pth" />
+                                    <Button x:Name="BtnInspectModel" Content="🔍 ตรวจสอบรายละเอียดโมเดล" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,10" Click="BtnInspectModel_Click" />
+                                    <TextBox x:Name="TxtModelInfoOutput" Height="100" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="#1C1C1C" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 5: DIFFSINGER & OPENUTAU -->
+            <TabItem Header="🎵 DiffSinger &amp; OpenUtau Studio">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <GroupBox Header="OpenUtau Voicebank Packager">
+                                <StackPanel>
+                                    <TextBlock Text="โฟลเดอร์ Voicebank (B:\For OpenUtau VB Making\...):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtOpenUtauVbDir" Margin="0,0,0,8" Text="B:\For OpenUtau VB Making\A Voicebank File\Thai" />
+                                    <TextBlock Text="โฟลเดอร์สำหรับ Render UTAU (B:\Render file to UTAU\...):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtOpenUtauRenderDir" Margin="0,0,0,12" Text="B:\Render file to UTAU" />
+                                    <Button x:Name="BtnPackageOpenUtau" Content="📦 จัดเตรียม Voicebank สำหรับ OpenUtau" Style="{StaticResource ModernButtonStyle}" Click="BtnPackageOpenUtau_Click" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                            <GroupBox Header="DiffSinger Training &amp; Autocleaning">
+                                <StackPanel>
+                                    <TextBlock Text="โฟลเดอร์โปรเจกต์ DiffSinger (DiffSinger_Training):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtDiffSingerDir" Margin="0,0,0,12" Text="DiffSinger_Training" />
+                                    
+                                    <Button x:Name="BtnAutocleanDiffSinger" Content="🧹 ทำความสะอาดดาต้าเซ็ต DiffSinger" Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,10" Click="BtnAutocleanDiffSinger_Click" />
+                                    <Button x:Name="BtnLaunchDiffSinger" Content="🚀 เริ่มระบบฝึกสอน DiffSinger" Style="{StaticResource SecondaryButtonStyle}" Click="BtnLaunchDiffSinger_Click" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Grid Splitter -->
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" Background="{StaticResource BrushBorder}" Cursor="SizeNS" />
+
+        <!-- ============================================================================== -->
+        <!-- BOTTOM PANEL: REAL-TIME CONSOLE & BILINGUAL LOG -->
+        <!-- ============================================================================== -->
+        <Border Grid.Row="3" Background="#151515" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Padding="12,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Console Header -->
+                <Grid Grid.Row="0" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📟 บันทึกการทำงานของระบบ (Real-Time Bilingual Studio Terminal)" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextWhite}" />
+                        <TextBlock x:Name="TxtLogCount" Text=" (0 รายการ)" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button x:Name="BtnCopyLog" Content="📋 คัดลอก (Copy)" Style="{StaticResource SecondaryButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,6,0" Click="BtnCopyLog_Click" />
+                        <Button x:Name="BtnClearLog" Content="🗑️ ล้างบันทึก (Clear)" Style="{StaticResource SecondaryButtonStyle}" Padding="8,3" FontSize="11" Click="BtnClearLog_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Console TextBox -->
+                <TextBox x:Name="TxtConsoleLog" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" 
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                         FontFamily="Consolas, Leelawadee UI, monospace" FontSize="12"
+                         Background="#0F0F0F" Foreground="#E0E0E0" BorderBrush="#2A2A2A" Padding="8" />
+            </Grid>
+        </Border>
+
+        <!-- ============================================================================== -->
+        <!-- DELTA SYNTH TOAST NOTIFICATION CONTAINER -->
+        <!-- Offset: (16, 20), Max: 280x80px, CornerRadius: 6 -->
+        <!-- ============================================================================== -->
+        <Border x:Name="ToastContainer" Grid.Row="1" Grid.RowSpan="3"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,16,20" MaxWidth="280" MaxHeight="80"
+                Background="#242424" BorderBrush="{StaticResource BrushAccentRed}" BorderThickness="1.5"
+                CornerRadius="6" Padding="10,8" Visibility="Collapsed" Panel.ZIndex="999">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="ToastIcon" Grid.Column="0" Text="✅" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="ToastTitle" Text="การดำเนินการสำเร็จ" FontWeight="Bold" FontSize="12" Foreground="{StaticResource BrushTextWhite}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="ToastMessage" Text="บันทึกไฟล์ผลลัพธ์เรียบร้อยแล้ว" FontSize="11" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" MaxHeight="40" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+    </Grid>
+</Window>

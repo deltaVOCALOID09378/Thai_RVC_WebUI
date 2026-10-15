@@ -1,0 +1,82 @@
+# Made And Checked By DELTA SYNTH & Gemini AI
+# Original by RVC Project
+
+--index-url https://mirrors.pku.edu.cn/pypi/simple
+
+# Core & Packaging
+setuptools
+wheel>=0.45,<1
+packaging>=24.0
+
+# Math & Data Processing
+numpy>=1.26.4,<2
+scipy>=1.13.1,<2
+scikit-learn>=1.6.0,<2
+einops>=0.8.0,<1
+faiss-cpu>=1.13.0,<2
+
+# Audio & Media
+av>=15.1.0,<16
+ffmpeg-python>=0.2.0,<1
+librosa<0.10.0
+praat-parselmouth==0.4.3
+sounddevice>=0.5.0,<1
+soundfile>=0.13.0,<1
+resampy
+pyworld>=0.3.5
+
+# Machine Learning & Models
+local-attention>=1.11.0,<2
+torchfcpe>=0.0.4,<0.1
+transformers>=4.49.0,<4.50
+lightning~=2.3.0
+onnx~=1.16.0
+onnxsim>=0.4.36
+torchmetrics
+
+# Utilities, Downloads & UI
+aria2
+click
+FreeSimpleGUI>=5.1.0,<5.2
+h5py
+matplotlib>=3.8.2,<4
+networkx>=3.2.0,<4
+opencv-python-headless>=4.10.0,<5
+PyYAML>=6.0.1
+tensorboard>=2.19.0
+tensorboardX
+tqdm>=4.67.0,<5
+MonkeyType==23.3.0
+coloredlogs>=15.0,<16
+
+# Web & API
+gradio
+altair>=4.2.0,<5
+anyio>=3.6.2,<4
+fastapi>=0.88.0,<0.100
+httpx>=0.23.0,<0.24
+markdown-it-py>=2.2.0,<3
+mdit-py-plugins>=0.3.3,<0.4
+pydantic>=1.10.13,<2
+pyparsing>=3.0.9,<3.1
+starlette>=0.22.0,<0.28
+uvicorn>=0.20.0,<0.23
+websockets>=10.4,<11
+fairseq
+
+uv
+pyaudio
+noise-reduction
+audio
+directml
+onnxruntime
+pip
+
+# --- DiffSinger Training (openvpi/DiffSinger) ---
+# ไลบรารีด้านล่างนี้เป็นชุดที่ openvpi/DiffSinger ต้องใช้เพิ่มเติมจาก RVC
+# ควรตรวจสอบกับ requirements.txt ของ DiffSinger เวอร์ชันที่ติดตั้งจริงอีกครั้ง
+pytorch-lightning
+praat-parselmouth
+resampy
+webrtcvad
+g2p-en

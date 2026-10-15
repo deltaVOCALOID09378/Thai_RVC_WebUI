@@ -1,0 +1,75 @@
+# ==============================================================================
+# Date: 11/10/2026 (B.E. 2569) | 11 October 2026
+# File: .gitignore | Version: 2.0
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# Original by Patiphat Wongyai (Delta) & RVC Project
+# ==============================================================================
+
+# OS & System Junk
+infer/lib/uvr5_pack/__pycache__
+infer/lib/infer_pack/__pycache__
+infer/lib/train/__pycache__
+infer/lib/jit/__pycache__
+/__pycache__/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+folder.htt
+$RECYCLE.BIN/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.pyc
+
+# Virtual Environments & Embedded Runtime
+.venv/
+venv/
+/runtime/
+_local_env/
+
+# Temporary Directories & Caches
+/TEMP/
+/opt/
+tools/aria2c/
+tools/flag.txt
+
+# Training Logs & Generated Weights
+/logs/*
+!/logs/mute/
+/weights/*
+/assets/weights/*
+!/assets/weights/.gitkeep
+/assets/indices/*
+!/assets/indices/.gitkeep
+/__pycache__/*
+
+# Archives & Temporary Packages
+*.zip
+*.tar
+*.gz
+*.7z
+
+# RVC Legacy Documents
+/All Documents/
+.tool-versions
+
+# C# & .NET Build Output & IDE Artifacts
+ThaiRVCStudio/bin/
+ThaiRVCStudio/obj/
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# Large Third-Party Binaries & Upstream Raw Folders
+ffmpeg.exe
+ffprobe.exe
+Retrieval-based-Voice-Conversion-WebUI-2.2.231006/
+DiffSinger_Training/checkpoints/
+DiffSinger_Training/pretrain/
+DiffSinger_Training/data/
