@@ -539,25 +539,197 @@ public partial class MainWindow : Window
         ShowToast("ตรวจสอบสำเร็จ", "อ่านเมตาดาต้าของโมเดลเรียบร้อยแล้ว");
     }
 
-    private void BtnPackageOpenUtau_Click(object sender, RoutedEventArgs e)
+    private void BtnBrowseDsDataset_Click(object sender, RoutedEventArgs e)
     {
-        AppendLog($"📦 กำลังจัดเตรียมโครงสร้าง Voicebank สำหรับ OpenUtau: {TxtOpenUtauVbDir.Text}", false);
-        ShowToast("OpenUtau Voicebank", "จัดเตรียมโครงสร้างโฟลเดอร์เรียบร้อยแล้ว");
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "เลือกโฟลเดอร์ชุดข้อมูลเสียงดิบ DiffSinger"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            TxtDsDatasetDir.Text = dialog.FolderName;
+        }
     }
 
-    private async void BtnAutocleanDiffSinger_Click(object sender, RoutedEventArgs e)
+    private void BtnBrowseDsAcoustic_Click(object sender, RoutedEventArgs e)
     {
-        AppendLog("🧹 เริ่มต้นทำความสะอาดดาต้าเซ็ต DiffSinger...", false);
-        ShowToast("ทำความสะอาด DiffSinger", "กำลังประมวลผลไฟล์เสียงดนตรีและเนื้อร้อง...");
-        _activeTaskCts = new CancellationTokenSource();
-        await _engineService.RunScriptAsync("DiffSinger_Training/autoclean.py", "", _activeTaskCts.Token);
-        ShowToast("DiffSinger Autoclean", "ทำความสะอาดดาต้าเซ็ตเสร็จสมบูรณ์");
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "เลือกไฟล์คอนฟิก Acoustic YAML",
+            Filter = "YAML Files (*.yaml;*.yml)|*.yaml;*.yml|All Files (*.*)|*.*"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            TxtDsAcousticCfg.Text = dialog.FileName;
+        }
     }
 
-    private void BtnLaunchDiffSinger_Click(object sender, RoutedEventArgs e)
+    private void BtnBrowseDsVariance_Click(object sender, RoutedEventArgs e)
     {
-        AppendLog("🚀 กำลังเริ่มต้นระบบฝึกสอน DiffSinger Acoustic & Variance...", false);
-        ShowToast("เปิดระบบ DiffSinger", "เริ่มต้นโมดูล DiffSinger Studio");
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "เลือกไฟล์คอนฟิก Variance YAML",
+            Filter = "YAML Files (*.yaml;*.yml)|*.yaml;*.yml|All Files (*.*)|*.*"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            TxtDsVarianceCfg.Text = dialog.FileName;
+        }
+    }
+
+    private void BtnBrowseOpenUtauVb_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "เลือกโฟลเดอร์ปลายทางสำหรับ OpenUtau Voicebank"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            TxtOpenUtauVbDir.Text = dialog.FolderName;
+        }
+    }
+
+    private async void BtnDsStep1Autoclean_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            AppendLog($"🧹 [DiffSinger] เริ่มต้นทำความสะอาดดาต้าเซ็ต: {TxtDsDatasetDir.Text}", false);
+            ShowToast("Autoclean", "กำลังทำความสะอาดและตรวจสอบสุขภาพเสียง...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py autoclean --dataset \"{TxtDsDatasetDir.Text}\"";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("Autoclean สำเร็จ", "ตรวจสอบและขจัด DC offset เรียบร้อย");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Autoclean: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsStep2Dict_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            AppendLog($"🧬 [DiffSinger] เริ่มต้นสแกนและตรวจสอบ Dictionary: {TxtDsDatasetDir.Text}", false);
+            ShowToast("Dictionary & Rule 10", "กำลังสร้าง dsdict.yaml และ phonemes.txt...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py dict --dataset \"{TxtDsDatasetDir.Text}\"";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("Dictionary สำเร็จ", "จัดทำหน่วยเสียงตาม Rule 10 เรียบร้อย");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Dictionary: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsStep3Binarize_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            AppendLog($"⚡ [DiffSinger] เริ่มต้นการ Binarize ด้วยคอนฟิก: {TxtDsAcousticCfg.Text}", false);
+            ShowToast("Binarize", "กำลังแปลงฟีเจอร์เสียงเป็นไบนารี...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py binarize --config \"{TxtDsAcousticCfg.Text}\"";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("Binarize สำเร็จ", "สกัด Mel Spectrogram และ F0 เรียบร้อย");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Binarize: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsStep4Train_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string exp = TxtDsExpName.Text.Trim();
+            AppendLog($"🏋️ [DiffSinger] เริ่มต้นการฝึกสอนโมเดล: {exp}", false);
+            ShowToast("กำลังฝึกสอน DiffSinger", $"โครงการ {exp} กำลังเทรน...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py train --config \"{TxtDsAcousticCfg.Text}\" --exp_name \"{exp}\" --batch {TxtDsBatchSize.Text}";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("ฝึกสอนสำเร็จ", $"โมเดล {exp} ฝึกสอนเสร็จสิ้น");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในการฝึกสอน: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsStep5Export_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string exp = TxtDsExpName.Text.Trim();
+            AppendLog($"📦 [DiffSinger] เริ่มต้นการส่งออกโมเดล ONNX: {exp}", false);
+            ShowToast("ส่งออก ONNX", "กำลังแปลง Checkpoint เป็นโมเดล ONNX...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py export --exp_name \"{exp}\" --type acoustic";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("ส่งออก ONNX สำเร็จ", "สร้าง acoustic.onnx เรียบร้อยแล้ว");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในการส่งออก ONNX: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsStep6Package_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string exp = TxtDsExpName.Text.Trim();
+            string targetDir = TxtOpenUtauVbDir.Text.Trim();
+            AppendLog($"🎵 [DiffSinger] กำลังจัดทำ Voicebank สำหรับ OpenUtau: {targetDir}", false);
+            ShowToast("สร้าง Voicebank", "ประกอบไฟล์ dsconfig.yaml และ character.yaml...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py package --exp_name \"{exp}\" --out \"{targetDir}\"";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("Voicebank พร้อมใช้งาน", "นำโฟลเดอร์ไปใช้งานใน OpenUtau ได้ทันที");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดในการจัดทำ Voicebank: {ex.Message}", true);
+        }
+    }
+
+    private async void BtnDsRunMasterPipeline_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string exp = TxtDsExpName.Text.Trim();
+            string dataset = TxtDsDatasetDir.Text.Trim();
+            string targetDir = TxtOpenUtauVbDir.Text.Trim();
+            AppendLog($"🚀 [DiffSinger] เริ่มต้นกระบวนการ 1-Click Master Pipeline แบบเต็มระบบ!", false);
+            ShowToast("1-Click Master Pipeline", "กำลังดำเนินงานตั้งแต่เริ่มต้นจนจบ...");
+            _activeTaskCts = new CancellationTokenSource();
+            string args = $"tools/diffsinger/diffsinger_pipeline_master.py pipeline --dataset \"{dataset}\" --exp_name \"{exp}\" --out \"{targetDir}\" --acoustic_cfg \"{TxtDsAcousticCfg.Text}\" --variance_cfg \"{TxtDsVarianceCfg.Text}\"";
+            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
+            ShowToast("1-Click สำเร็จสมบูรณ์", "โมเดลและ Voicebank พร้อมใช้งาน 100%");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ข้อผิดพลาดใน 1-Click Pipeline: {ex.Message}", true);
+        }
+    }
+
+    private void BtnDsCancelTask_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (_activeTaskCts != null && !_activeTaskCts.IsCancellationRequested)
+            {
+                _activeTaskCts.Cancel();
+                AppendLog("🛑 [DiffSinger] ส่งสัญญาณยกเลิกภารกิจเรียบร้อยแล้ว", true);
+                ShowToast("ยกเลิกภารกิจ", "สั่งยุติกระบวนการทำงาน DiffSinger แล้ว", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"🔴 ไม่สามารถยกเลิกภารกิจได้: {ex.Message}", true);
+        }
     }
 
     #endregion

@@ -443,30 +443,199 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid Margin="10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="460" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                            <GroupBox Header="OpenUtau Voicebank Packager">
+                        <!-- Left Column: Project Config & Hardware Settings -->
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <GroupBox Header="1. ตั้งค่าโปรเจกต์ DiffSinger (Project &amp; Dataset)">
                                 <StackPanel>
-                                    <TextBlock Text="โฟลเดอร์ Voicebank (B:\For OpenUtau VB Making\...):" Margin="0,0,0,4" />
-                                    <TextBox x:Name="TxtOpenUtauVbDir" Margin="0,0,0,8" Text="B:\For OpenUtau VB Making\A Voicebank File\Thai" />
-                                    <TextBlock Text="โฟลเดอร์สำหรับ Render UTAU (B:\Render file to UTAU\...):" Margin="0,0,0,4" />
-                                    <TextBox x:Name="TxtOpenUtauRenderDir" Margin="0,0,0,12" Text="B:\Render file to UTAU" />
-                                    <Button x:Name="BtnPackageOpenUtau" Content="📦 จัดเตรียม Voicebank สำหรับ OpenUtau" Style="{StaticResource ModernButtonStyle}" Click="BtnPackageOpenUtau_Click" />
+                                    <TextBlock Text="ชื่อการทดลอง / เสียงร้อง (Experiment Name):" Margin="0,0,0,4" />
+                                    <TextBox x:Name="TxtDsExpName" Margin="0,0,0,10" Text="My_DiffSinger_Voice" />
+
+                                    <TextBlock Text="โฟลเดอร์ชุดข้อมูลเสียงดิบ (Dataset Directory):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtDsDatasetDir" Grid.Column="0" Margin="0,0,8,0" Text="DiffSinger_Training\data\my_voice" />
+                                        <Button x:Name="BtnBrowseDsDataset" Grid.Column="1" Content="📁 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseDsDataset_Click" />
+                                    </Grid>
+
+                                    <TextBlock Text="ไฟล์คอนฟิก Acoustic (Acoustic Config YAML):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtDsAcousticCfg" Grid.Column="0" Margin="0,0,8,0" Text="DiffSinger_Training\configs\acoustic.yaml" />
+                                        <Button x:Name="BtnBrowseDsAcoustic" Grid.Column="1" Content="📄 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseDsAcoustic_Click" />
+                                    </Grid>
+
+                                    <TextBlock Text="ไฟล์คอนฟิก Variance (Variance Config YAML):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtDsVarianceCfg" Grid.Column="0" Margin="0,0,8,0" Text="DiffSinger_Training\configs\variance.yaml" />
+                                        <Button x:Name="BtnBrowseDsVariance" Grid.Column="1" Content="📄 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseDsVariance_Click" />
+                                    </Grid>
+
+                                    <TextBlock Text="โฟลเดอร์สำหรับ OpenUtau Voicebank (Export Dir):" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="TxtOpenUtauVbDir" Grid.Column="0" Margin="0,0,8,0" Text="B:\For OpenUtau VB Making\A Voicebank File\Thai\My_DiffSinger_Voice" />
+                                        <Button x:Name="BtnBrowseOpenUtauVb" Grid.Column="1" Content="📂 เลือก..." Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowseOpenUtauVb_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="2. การตั้งค่าฮาร์ดแวร์และการฝึกสอน (Hardware &amp; Hyperparameters)">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="Max Batch Size:" Margin="0,0,0,4" />
+                                            <TextBox x:Name="TxtDsBatchSize" Text="16" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="ความแม่นยำ (Precision):" Margin="0,0,0,4" />
+                                            <ComboBox x:Name="CmbDsPrecision">
+                                                <ComboBoxItem Content="16-mixed (แนะนำสำหรับ GPU)" IsSelected="True" />
+                                                <ComboBoxItem Content="32-true (ความแม่นยำสูง / CPU)" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Background="#202A24" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🟢" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="TxtDsGpuBadge" Text="ตรวจจับ GPU อัตโนมัติ: พร้อมใช้งาน Mixed Precision" FontSize="11" Foreground="{StaticResource BrushTextWhite}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </GroupBox>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                            <GroupBox Header="DiffSinger Training &amp; Autocleaning">
+                        <!-- Right Column: Full-System Pipeline Steps & Execution -->
+                        <StackPanel Grid.Column="1">
+                            <GroupBox Header="3. ลำดับกระบวนการ DiffSinger เต็มระบบ (End-to-End Master Pipeline)">
                                 <StackPanel>
-                                    <TextBlock Text="โฟลเดอร์โปรเจกต์ DiffSinger (DiffSinger_Training):" Margin="0,0,0,4" />
-                                    <TextBox x:Name="TxtDiffSingerDir" Margin="0,0,0,12" Text="DiffSinger_Training" />
-                                    
-                                    <Button x:Name="BtnAutocleanDiffSinger" Content="🧹 ทำความสะอาดดาต้าเซ็ต DiffSinger" Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,10" Click="BtnAutocleanDiffSinger_Click" />
-                                    <Button x:Name="BtnLaunchDiffSinger" Content="🚀 เริ่มระบบฝึกสอน DiffSinger" Style="{StaticResource SecondaryButtonStyle}" Click="BtnLaunchDiffSinger_Click" />
+                                    <!-- Step 1 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 1: ตรวจสอบและทำความสะอาดดาต้าเซ็ตเสียง (Autoclean)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="ตัดเสียงเงียบแบบคงลมหายใจ, ขจัด DC Offset, ควบคุม Peak -1.0 dBFS และกักกันไฟล์เสียหาย" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep1Autoclean" Grid.Column="1" Content="🧹 ทำความสะอาดเสียง" Style="{StaticResource ModernButtonStyle}" Padding="10,6" Click="BtnDsStep1Autoclean_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Step 2 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 2: ตรวจสอบพจนานุกรมและหน่วยเสียง (Phonemes &amp; Rule 10)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="สร้าง dsdict.yaml, phonemes.txt และตรวจสอบสัดส่วนพยัญชนะ/สระตาม Rule 10" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep2Dict" Grid.Column="1" Content="🧬 ตรวจสอบ Dictionary" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Click="BtnDsStep2Dict_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Step 3 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 3: สกัดคุณลักษณะไบนารี (Binarize Acoustic &amp; Variance)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="สกัด Mel Spectrogram 128 bins, F0 (RMVPE), Energy, Breathiness เป็นไบนารี" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep3Binarize" Grid.Column="1" Content="⚡ เริ่มต้น Binarize" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Click="BtnDsStep3Binarize_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Step 4 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 4: ฝึกสอนโมเดล DiffSinger (Acoustic / Variance Training)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="ฝึกสอนโครงข่าย Diffusion และ Variance Predictor พร้อมระบบป้องกัน OOM" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep4Train" Grid.Column="1" Content="🏋️ ฝึกสอนโมเดล" Style="{StaticResource ModernButtonStyle}" Padding="10,6" Click="BtnDsStep4Train_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Step 5 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 5: ส่งออกเป็น ONNX Model (Acoustic / Variance Export)" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="แปลง Checkpoint .ckpt เป็นกราฟ ONNX พร้อมใช้งานใน OpenUtau" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep5Export" Grid.Column="1" Content="📦 ส่งออก ONNX" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Click="BtnDsStep5Export_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Step 6 -->
+                                    <Border Background="{StaticResource BrushCardSecondary}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="ขั้นตอนที่ 6: สร้างแพ็กเกจ Voicebank สำหรับ OpenUtau" FontWeight="Bold" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="ประกอบ dsconfig.yaml, character.yaml, phonemes.txt พร้อมร้องเพลงทันที" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsStep6Package" Grid.Column="1" Content="🎵 บรรจุ Voicebank" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Click="BtnDsStep6Package_Click" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Master 1-Click Execution -->
+                                    <Border Background="#2B1510" BorderBrush="{StaticResource BrushAccentRed}" BorderThickness="1.5" CornerRadius="8" Padding="12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="⚡ ดำเนินการอัตโนมัติครบวงจร (1-Click Master Pipeline)" FontWeight="Bold" FontSize="14" Foreground="{StaticResource BrushTextWhite}" />
+                                                <TextBlock Text="รันตั้งแต่ทำความสะอาดเสียง, สร้างดัชนี, Binarize, เทรน จนถึงส่งออก Voicebank พร้อมใช้งาน" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button x:Name="BtnDsRunMasterPipeline" Grid.Column="1" Content="🚀 รันครบวงจร 1-Click" Style="{StaticResource ModernButtonStyle}" Height="40" Padding="14,8" Margin="0,0,8,0" Click="BtnDsRunMasterPipeline_Click" />
+                                            <Button x:Name="BtnDsCancelTask" Grid.Column="2" Content="🛑 ยกเลิก" Style="{StaticResource SecondaryButtonStyle}" Height="40" Padding="12,8" Click="BtnDsCancelTask_Click" />
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
                             </GroupBox>
                         </StackPanel>
