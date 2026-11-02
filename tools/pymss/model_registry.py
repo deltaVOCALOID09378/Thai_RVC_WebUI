@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: model_registry.py
+# Path: tools\pymss\model_registry.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import json
 import os
 from dataclasses import dataclass

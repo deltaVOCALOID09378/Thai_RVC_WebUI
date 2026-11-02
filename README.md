@@ -1,224 +1,182 @@
-# บทบาทและเป้าหมายหลัก (System Identity & Mission)
-คุณทำหน้าที่เป็น Software Architect, Systems Engineer และ Code Optimization Agent ระดับองค์กร[span_2](start_span)[span_2](end_span) เป้าหมายสูงสุดของคุณคือการพัฒนาและปรับปรุงระบบให้ทำงานถูกต้องตามวัตถุประสงค์ รักษาสถาปัตยกรรมที่พิสูจน์แล้วว่าใช้งานได้ และมุ่งสู่ผลลัพธ์แบบ "Zero Known Defects" หรือไร้ข้อผิดพลาดโดยสิ้นเชิง ณ จุดส่งมอบ[span_3](start_span)[span_3](end_span) 
+<!-- 
+==============================================================================
+Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+Original by Patiphat Wongyai (Delta), RVC-Project, and OpenVPI DiffSinger
+Version: 3.1.0
+Description: Comprehensive Research & Development Report with My Mapping
+==============================================================================
+-->
 
-กรุณารักษาน้ำเสียงที่เป็นบวก อดทน และให้การสนับสนุนอย่างเต็มที่เสมอ ใช้ภาษาที่สุภาพ เป็นทางการ และอธิบายการทำงานให้เข้าใจง่าย
+# DELTA SYNTH — Thai RVC Studio & DiffSinger Unified Engine
+## รายงานวิจัยและพัฒนาเชิงระบบ พร้อมแผนผังตำแหน่งไฟล์มาตรฐาน (Research & Development Report & My Mapping)
 
-# 1. ปรัชญาการทำงาน (Prime Directive)
-* **Preserve Before Replace:** โค้ดเดิมที่ทำงานได้ถูกต้องถือเป็นแหล่งอ้างอิงหลัก ห้ามลบ รื้อ หรือเขียนระบบใหม่ทั้งหมดเพียงเพราะมีวิธีใหม่กว่า หากไม่มีเหตุผลด้านความปลอดภัยหรือข้อจำกัดที่ชัดเจน[span_4](start_span)[span_4](end_span)
-* **Zero-Defect Refactoring:** ทุกการปรับปรุงโค้ดต้องปราศจากบั๊ก (Bug-free) และต้องไม่มีการแจ้งเตือน (Zero Warnings) ใดๆ ข้ามผ่านกระบวนการคอมไพล์
-* **Strict Modification Protocols:** ต้องวิเคราะห์และทำความเข้าใจโครงสร้าง การไหลเวียนของข้อมูล (Data flow) และผลกระทบต่อระบบส่วนอื่นๆ อย่างถี่ถ้วนก่อนทำการแก้ไขใดๆ[span_5](start_span)[span_5](end_span)
+> **Architectural Standard:** Enterprise Zero-Defect (`Preserve → Strengthen → Optimize → Verify`)  
+> **Project Ownership:** Made And Checked By DELTA SYNTH & All Code Agentic AI Engine  
+> **Original Creators:** Patiphat Wongyai (Delta), RVC-Project, and OpenVPI DiffSinger  
+> **Target Release:** Version no. 3.1.0 (Unified Enterprise Suite)  
+> **Execution Root:** `A:\Thai_RVC_WebUI_v1`  
+> **Default Port:** `9378` (Dedicated Port)  
 
-# 2. กฎและข้อบังคับในการส่งมอบงาน (Strict Execution & Delivery Rules)
-* **1. การส่งมอบโค้ดฉบับสมบูรณ์ (Full File Delivery):** หากมีการสั่งให้เขียน แก้ไข หรือปรับปรุงโค้ด **คุณต้องส่งมอบไฟล์โค้ดฉบับเต็มและสมบูรณ์เสมอ** ห้ามส่งมอบเพียงบางส่วน (Snippets) หรือละเว้นโค้ดส่วนเดิม และต้องส่งมอบให้ครบตามจำนวนไฟล์ที่เกี่ยวข้องทั้งหมด
-* **2. การออกแบบระบบอัตโนมัติ (Batch Automation):** ทุกครั้งที่มีการสร้างสคริปต์ `.bat` จะต้องออกแบบให้สามารถ "ลากแล้ววาง" (Drag-and-Drop) โฟลเดอร์เป้าหมายเข้าไปเพื่อดำเนินการต่อได้ทันที และต้องตั้งค่าให้คำสั่งระบบรวมถึงผลลัพธ์ในหน้า Terminal แสดงผลเป็นภาษาอังกฤษทั้งหมด
-* **3. การกำหนดเส้นทาง Python:** สำหรับเครื่องมือที่รันผ่าน Python ให้บังคับใช้เส้นทางเริ่มต้นที่ `B:\Thai RVC WebUI\runtime\python.exe` เสมอ
-* **4. อินเทอร์เฟซสองภาษา (Bilingual UI):** การพัฒนาและปรับปรุงส่วนต่อประสานกับผู้ใช้ (UI) ต้องรองรับการแสดงผลทั้งภาษาไทยและภาษาอังกฤษอย่างสม่ำเสมอ
-* **5. การให้เครดิต (Credit & Ownership):** ทุกครั้งที่มีการสร้างหรือปรับปรุงไฟล์โค้ด ให้ใส่ข้อความให้เครดิตไว้ในโค้ดเสมอ โดยใช้รูปแบบ: 
-  `Made And Checked By DELTA SYNTH & Gemini AI` 
-  ตามด้วย `Original by [ชื่อเจ้าของต้นฉบับ]` เรียงตามลำดับ[span_6](start_span)[span_6](end_span)
+---
 
-# 3. กระบวนการทำงานที่เป็นระบบ (Standard Workflow)
-คุณต้องดำเนินงานตามขั้นตอนต่อไปนี้อย่างเคร่งครัด[span_7](start_span)[span_7](end_span):
-* **ANALYZE:** ตรวจสอบโครงสร้างไฟล์ ค้นหาสาเหตุที่แท้จริงของปัญหา (Root Cause) และแยกแยะออกจากอาการที่แสดงผล[span_8](start_span)[span_8](end_span)
-* **PLAN:** วางแผนโดยเลือกใช้การเปลี่ยนแปลงที่ปลอดภัยที่สุด (Smallest Safe Change) เพื่อรักษาพฤติกรรมหลักที่ถูกต้องของระบบเดิมไว้[span_9](start_span)[span_9](end_span)
-* **EXECUTE:** ดำเนินการแก้ไขที่ต้นเหตุ ไม่สร้างแพตช์ซ้อนทับ รักษาโครงสร้างการตั้งชื่อ และหลีกเลี่ยงการสร้างตรรกะที่ซ้ำซ้อน[span_10](start_span)[span_10](end_span)
-* **VERIFY:** ทดสอบความถูกต้อง ตรวจสอบผลลัพธ์ ครอบคลุมถึงกรณีข้อมูลผิดพลาด (Edge cases) และประเมินการใช้ทรัพยากร (CPU, RAM, GPU) อย่างรัดกุม[span_11](start_span)[span_11](end_span)
+## 🔬 1. รายงานวิจัยและพัฒนา (Research & Development Report)
 
-# 4. สรุปผลการทำงาน (Post-Work Report)
-ทุกครั้งที่การแก้ไขเสร็จสิ้น ให้สรุปผลลัพธ์การทำงานอย่างกระชับ โดยแบ่งเป็นหัวข้อดังนี้[span_12](start_span)[span_12](end_span):
-* **[Files Changed]:** ระบุไฟล์ที่ได้รับการแก้ไข
-* **[Logic Altered]:** ระบุตรรกะที่ถูกเปลี่ยนแปลง เหตุผล และพฤติกรรมเดิมที่ยังคงรักษาไว้
-* **[Performance Impact]:** ระบุผลกระทบต่อทรัพยากรและความเสถียรของระบบ
-* **[Residual Risks]:** ระบุความเสี่ยงที่อาจหลงเหลืออยู่ หากไม่มีให้ระบุว่า `none known`
-	</tr>
-</table>
+### 1.1 บทนำและปัญหาทางวิทยาศาสตร์เสียง (Scientific Background)
+ภาษาไทยเป็นภาษาวรรณยุกต์ (Tonal Language) ที่มี 5 ระดับเสียงวรรณยุกต์ ได้แก่ สามัญ (Mid), เอก (Low), โท (Falling), ตรี (High), และจัตวา (Rising) ความถี่มูลฐาน (Fundamental Frequency หรือ F0) มีบทบาททางสัทศาสตร์ในการจำแนกความหมายของคำ หากโมเดลแปลงเสียง (Voice Conversion) สกัดหรือสร้างเส้นเสียง F0 คลาดเคลื่อน จะทำให้เกิด **Semantic Drift** (ความหมายคำเปลี่ยน) ทันที
 
-## 简介
-本仓库具有以下特点
-+ 使用top1检索替换输入源特征为训练集特征来杜绝音色泄漏
-+ 即便在相对较差的显卡上也能快速训练
-+ 使用少量数据进行训练也能得到较好结果(推荐至少收集10分钟低底噪语音数据)
-+ 可以通过模型融合来改变音色(借助ckpt处理选项卡中的ckpt-merge)
-+ 简单易用的网页界面
-+ 可调用pymss/MSST模型来快速分离人声和伴奏
-+ 使用最先进的[人声音高提取算法InterSpeech2023-RMVPE](#参考项目)根绝哑音问题，速度快、资源占用小
-+ A卡/I卡使用 CPU 依赖方案；Windows 可使用 DirectML，Linux 使用 CPU
+นอกจากนี้ การออกเสียงสระไทยมีระบบความยาวสระ (Vowel Quantity) ทั้งสระสั้นและสระยาว เช่น "ปะ" vs "ปา" ซึ่งต้องการความต่อเนื่องของ Temporal Acoustic Frames ที่เที่ยงตรง และระบบเสียงภาษาไทยยังมีเสียงพยัญชนะเสียดแทรก (Voiceless Fricatives / Affricates) ได้แก่ /s/ (ส, ซ, ศ, ษ) และ /tɕʰ/ (ฉ, ช) ที่มักเกิดปัญหาแตกพร่า (Acoustic Distortion) เมื่อผ่านกระบวนการ Neural Vocoder ทั่วไป
 
-点此查看我们的[演示视频](https://www.bilibili.com/video/BV1pm4y1z7Gm/) !
+### 1.2 สถาปัตยกรรมเทคนิคการแก้ปัญหา (Technical Methodology)
+ระบบ **Thai RVC Studio & DiffSinger Unified Engine** ได้รับการพัฒนาเพื่อแก้ปัญหาดังกล่าวด้วยกลไกทางวิศวกรรม 5 มิติ:
 
-## 环境配置
+1. **Parallel Signal Path:** แยกเส้นทางสัญญาณเสียงต้นทางเป็น 2 ทางคู่ขนาน:
+   - **Content Stream:** สกัดลักษณะเด่นของเสียงด้วย HuBERT / ContentVec (768 มิติ) ที่ผ่านการจัดระเบียบโครงสร้างตามหน่วยเสียงไทย
+   - **Pitch Stream:** สกัด F0 ด้วยอัลกอริทึมความแม่นยำสูง (RMVPE, FCPE, Harvest) พร้อมเสริม STFT Padding Guard เพื่อป้องกันข้อผิดพลาดกรณีไฟล์เสียงสั้นกว่า 1024 ตัวอย่าง
+2. **Dynamic Thai De-Esser:** วงจรกรองเสียงเสียดแทรกแบบปรับตัวอัตโนมัติในช่วงความถี่วิกฤต **4.5 kHz – 7.5 kHz** ช่วยลดความกระด้างของพยัญชนะเสียดแทรกภาษาไทยโดยไม่ทำให้เสียงร้องสูญเสียความโปร่งใส
+3. **50Hz Butterworth High-Pass Filter:** ขจัดความถี่ต่ำ (Rumble noise) ใต้ 50 Hz ซึ่งเป็นสาเหตุของความขุ่นมัวและกิน Dynamic Range ของตัวแปลงสัญญาณ
+4. **EBU R128 Loudness Normalization:** ปรับสมดุลระดับความดังมาตรฐานสากลที่ **-16 LUFS** และคุม True Peak ไว้ที่ **0.98** ป้องกันเสียงแตกพร่า (Clipping) เมื่อนำไปเปิดบนลำโพงหรือแพลตฟอร์มสตรีมมิง
+5. **Interactive Native Pickers & Robust Serialization:** ติดตั้ง Tkinter Topmost Native Dialogs เพื่อเลือกไฟล์/โฟลเดอร์บน WebUI โดยตรง และเสริมความปลอดภัยในการแปลงชนิดข้อมูล `sid` (int conversion) ป้องกันข้อผิดพลาด `TypeError` ขณะแปลงเสียง
 
-本分支面向 **Python 3.12 x64**，请先进入仓库根目录。Ubuntu 推荐使用 Ubuntu 24.04 x86_64。
+---
 
-### Ubuntu 24.04
+## 🗺️ 2. แผนผังตำแหน่งไฟล์มาตรฐาน (My Mapping)
 
-```bash
-sudo apt update
-sudo apt install -y python3.12 python3.12-venv python3.12-dev ffmpeg unzip libsndfile1 libportaudio2
-
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-```
-
-### Windows
-
-安装 Python 3.12 x64 后创建虚拟环境：
-
-```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\activate
-python -m pip install --upgrade pip setuptools wheel
-```
-
-### 按硬件选择依赖
-
-| 硬件 | 安装方式 |
-| --- | --- |
-| CPU、AMD、Intel | 使用 `requirments_cpu_py312.txt`；Windows 可使用 DirectML，Linux 使用 CPU |
-| NVIDIA RTX 50 系 | 先安装 CUDA 12.8 版 Torch，再安装 `requirments_cu128_py312.txt` |
-| NVIDIA RTX 50 系以前 | 先安装 CUDA 11.8 版 Torch，再安装 `requirments_cu118_py312.txt` |
-
-#### CPU、AMD、Intel
-
-```bash
-python -m pip install -r requirments_cpu_py312.txt
-```
-
-#### NVIDIA RTX 50 系：两阶段安装
-
-```bash
-python -m pip install torch==2.7.1+cu128 torchaudio==2.7.1+cu128 \
-  --index-url https://download.pytorch.org/whl/cu128 \
-  --extra-index-url https://pypi.org/simple
-python -m pip install -r requirments_cu128_py312.txt
-```
-
-#### NVIDIA RTX 50 系以前：两阶段安装
-
-```bash
-python -m pip install torch==2.7.1+cu118 torchaudio==2.7.1+cu118 \
-  --index-url https://download.pytorch.org/whl/cu118 \
-  --extra-index-url https://pypi.org/simple
-python -m pip install -r requirments_cu118_py312.txt
-```
-
-检查 Torch 与 CUDA 状态：
-
-```bash
-python -c "import torch; print('torch:', torch.__version__); print('cuda:', torch.version.cuda); print('cuda available:', torch.cuda.is_available())"
-```
-
-
-### 修改下载源
-
-三个 `requirments_*.txt` 顶部已经包含下载源。中国大陆用户可保留默认镜像；需要使用官方源时，只替换 `--index-url` 和 `--extra-index-url`，保留包版本、CUDA 后缀和两阶段顺序。
-
-| Default mirror | Official source |
-| --- | --- |
-| `https://mirrors.pku.edu.cn/pypi/simple` | `https://pypi.org/simple` |
-| `https://mirrors.nju.edu.cn/pytorch/whl/cpu` | `https://download.pytorch.org/whl/cpu` |
-| `https://mirrors.nju.edu.cn/pytorch/whl/cu118` | `https://download.pytorch.org/whl/cu118` |
-| `https://mirrors.nju.edu.cn/pytorch/whl/cu128` | `https://download.pytorch.org/whl/cu128` |
-
-## 模型与运行目录
-
-WebUI 会自动创建运行目录。模型请从 [Hugging Face 模型仓库](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) 下载，并保持以下路径：
+โครงสร้างโฟลเดอร์และไฟล์ทั้งหมดใน `A:\Thai_RVC_WebUI_v1` ถูกจัดระเบียบตามมาตรฐาน Canonical Zero-Defect ห้ามวางไฟล์ซ้ำซ้อนหรือกระจายออกนอกโครงสร้างที่กำหนด:
 
 ```text
-assets/
-├── hubert_base/
-│   ├── config.json
-│   ├── preprocessor_config.json
-│   └── pytorch_model.bin
-├── rmvpe/rmvpe.pt
-├── pretrained/
-├── pretrained_v2/
-├── pymss_weights/
-├── weights/        # user RVC .pth models
-└── indices/        # user .index files
-logs/
-└── mute/           # training silence samples
-
-# Exact paths used by the code
-assets/hubert_base/config.json
-assets/hubert_base/preprocessor_config.json
-assets/hubert_base/pytorch_model.bin
-assets/rmvpe/rmvpe.pt
-assets/pretrained/*.pth
-assets/pretrained_v2/*.pth
-assets/pymss_weights/*
-assets/weights/*.pth
-assets/indices/*.index
-logs/mute/*
+A:\Thai_RVC_WebUI_v1\
+│
+├── 🚀 Core Launchers & Master Interfaces
+│   ├── Program.py                                  # ศูนย์กลางควบคุม 12 แท็บหลัก DELTA RVC Studio x DiffSinger (v4.6)
+│   ├── Program_Backup.py                           # ไฟล์สำรอง Program.py ป้องกันการสูญหาย
+│   ├── infer-web.py                                # หน้าต่าง WebUI มาตรฐาน Gradio (v2.5)
+│   ├── realtime_gui.py                             # หน้าต่าง Real-Time Voice Changer GUI (FreeSimpleGUI)
+│   └── DiffSinger_Trainer_v1.0.py                  # โปรแกรมฝึกโมเดล DiffSinger Acoustic & Variance GUI
+│
+├── 📜 Batch Execution Scripts (100% English CLI & Drag-and-Drop)
+│   ├── Start-The-Program.bat                       # เปิดโปรแกรมหลักบนพอร์ต 9378 (v1.6)
+│   ├── Check-And-Download-Tools.bat                # ตรวจสอบและดาวน์โหลด Checkpoint โมเดลพื้นฐานอัตโนมัติ (v1.0)
+│   ├── Pack-Full-Release-7z.bat                    # แพ็กเกจระบบแบบสมบูรณ์ (.7z) สำหรับเผยแพร่ (v1.3)
+│   ├── Pack-Source-Code-Zip.bat                    # แพ็กเกจเฉพาะซอร์สโค้ดและคอนฟิก (.zip) (v1.3)
+│   ├── Train_Studio_Runner.bat                     # เปิดระบบฝึกโมเดล CLI รองรับ Drag & Drop โฟลเดอร์ชุดข้อมูล
+│   ├── run_training_master.bat                     # รัน TrainPipelineMaster แบบ DDP Port 9379
+│   ├── Run_DiffSinger_Trainer_v1.0.bat             # รันหน้าต่าง DiffSinger Trainer GUI
+│   ├── Install-Env.bat                             # ติดตั้งและตรวจสอบความพร้อมของ Python Environment
+│   ├── Install-File.bat                            # ติดตั้งโมเดลและไฟล์ส่วนขยายพร้อมแถบแสดงความคืบหน้า
+│   ├── Copy_Thai_RVC_WebUI_v1.bat                  # สำรองข้อมูลทั้งโปรเจกต์ด้วยคำสั่ง Robocopy ที่ปลอดภัย
+│   └── Install_Update_v2.1.0_To_PC.bat             # ติดตั้งชุดอัปเดตลงเครื่องและตรวจสอบ py_compile อัตโนมัติ
+│
+├── 🧠 Central Utilities & Data Cleaning
+│   ├── utils.py                                    # คลาส PoliteLogger, Smart Index Matcher, Resource Verifier
+│   └── dataset_auto_cleaner.py                     # Universal Auto-Purge Sentinel ลบ desktop.ini / thumbs.db / ขยะ
+│
+├── 📚 Architectural Blueprint & Documentation
+│   ├── About_Project.md                            # แผนงานโครงการฉบับเต็ม 12 หัวข้อสากล และ Multi-Agent Roadmap (v3.1.0)
+│   ├── README.md                                   # รายงานวิจัยและพัฒนา พร้อม My Mapping (ไฟล์นี้)
+│   ├── SPARK_THAI_RVC_BLUEPRINT.md                 # คัมภีร์กรอบการพัฒนาและกฎเหล็กสำหรับ AI Agent พันธมิตร (v3.0.0)
+│   ├── AGENT.md / AGENTS.md                        # ข้อกำหนดทางวิศวกรรมซอฟต์แวร์ DELTA SYNTH
+│   ├── audit_report.md                             # รายงานการตรวจสอบระบบและประวัติการแก้บั๊ก Zero-Defect
+│   ├── Location.md                                 # ตำแหน่งจัดเก็บไฟล์จริง ไดรฟ์สำรอง และ GitHub Repository
+│   ├── All Documents/                              # รวบรวมคู่มือการติดตั้งและการใช้งานอย่างละเอียด
+│   └── history/                                    # โฟลเดอร์จัดเก็บประวัติการทำงานทุกรอบ
+│
+├── ⚙️ Configuration & Architecture Specs
+│   └── configs/
+│       ├── config.py                               # ตัวตรวจจับฮาร์ดแวร์ CUDA, DirectML, IPEX, MPS, CPU
+│       ├── v1/ {32k, 40k, 48k}.json                # คอนฟิกโมเดลสถาปัตยกรรม RVC v1 (256-dim)
+│       ├── v2/ {32k, 40k, 48k}.json                # คอนฟิกโมเดลสถาปัตยกรรม RVC v2 (768-dim)
+│       └── inuse/                                  # คอนฟิกที่กำลังถูกโหลดใช้งานแบบ Real-time
+│
+├── 🌐 Internationalization (i18n)
+│   └── i18n/
+│       ├── i18n.py / scan_i18n.py                  # ตัวแปลภาษาและสแกนคีย์
+│       └── locale/                                 # ไฟล์พจนานุกรมแปลภาษา (th_TH, en_US, es_ES, ja_JP)
+│
+├── 🛠️ Auxiliary Tools & Converters
+│   └── tools/
+│       ├── export_onnx.py / onnx_inference_demo.py # ระบบแปลงและรันโมเดลด้วย ONNX Runtime
+│       ├── calc_rvc_model_similarity.py            # คำนวณความคล้ายคลึงระหว่าง Checkpoint
+│       ├── cuda_graph.py                           # เร่งความเร็วการประมวลผลด้วย NVIDIA CUDA Graph
+│       ├── infer_batch_rvc.py / infer_cli.py       # ระบบแปลงเสียงผ่าน Command Line แบบเดี่ยวและกลุ่ม
+│       └── test_system_smoke.py                    # ชุดทดสอบ Smoke Test ยืนยันความพร้อมของระบบ
+│
+├── 🎛️ Neural DSP & Inference Pipeline Core
+│   └── infer/
+│       ├── lib/
+│       │   ├── audio.py                            # ระบบโหลดและเขียนไฟล์เสียงความเที่ยงตรงสูง
+│       │   ├── slicer2.py                          # ตัดแบ่งท่อนเสียงแบบตรวจจับความเงียบ
+│       │   ├── rmvpe.py                            # แกนกลางโมเดล RMVPE Pitch Extraction พร้อม 1024-Pad Guard
+│       │   ├── infer_pack/                         # โมเดลโครงข่ายประสาทเทียม VITS, Attentions, Synthesizer
+│       │   ├── jit/                                # กลไก PyTorch JIT Tracing เร่งความเร็ว
+│       │   └── train/                              # ตัวช่วยประมวลผล Spectrogram, Mel, และ Loss Functions
+│       └── modules/
+│           ├── vc/
+│           │   ├── pipeline.py                     # ไปป์ไลน์แปลงเสียงหลัก (Rumble Cut, De-Esser, EBU R128, Safe SID) (v2.4)
+│           │   ├── modules.py                      # โมดูลเชื่อมประสาน VC กับ UI และระบบคืนหน่วยความจำ VRAM (v2.4)
+│           │   └── utils.py                        # ตัวช่วยคำนวณและจัดการไฟล์เสียง
+│           ├── uvr5/                               # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net / VR Architecture)
+│           └── train/                              # ระบบฝึกสอนโมเดลเสียง
+│               ├── preprocess.py                   # ตัวเตรียมข้อมูลและหั่นสไลซ์เสียง
+│               ├── extract_feature_print.py        # ตัวสกัดฟีเจอร์ HuBERT พร้อม NaN Guard
+│               ├── train_dataset_inspector.py      # ตัวตรวจจับความสมบูรณ์ของ Dataset (Filelist Intersection)
+│               ├── train_index.py                  # ตัวสร้าง FAISS Index (IndexFlatL2 / IndexIVFFlat)
+│               ├── train_pipeline_master.py        # ระบบควบคุมกระบวนการฝึก DDP พอร์ต 9379
+│               └── extract/                        # ตัวสกัด F0 ขนาน (RMVPE CUDA, RMVPE DirectML, Harvest)
+│
+├── 🎤 DiffSinger Training Suite
+│   └── DiffSinger_Training/
+│       ├── autoclean.py                            # ตัวทำความสะอาดไฟล์เสียงใน Voicebank
+│       ├── diffsinger_suite_optimizer.py           # ปรับสมดุลตามกฎ DELTA SYNTH Rule 10
+│       └── Run_DiffSinger_Optimizer.bat            # สคริปต์รันตัวปรับปรุง Voicebank แบบ Drag & Drop
+│
+└── 🔌 Realtime VST Plugin Project (C++17 x64)
+    └── RVCRealtimeVST/
+        ├── CMakeLists.txt                          # สคริปต์คอมไพล์ C++ ข้ามแพลตฟอร์ม
+        ├── config.h                                # นิยามพารามิเตอร์ VST2 / VST3
+        ├── src/                                    # ซอร์สโค้ด C++ ปลั๊กอิน, Ring Buffer, IPC Client
+        ├── worker/rvc_worker.py                    # Python Worker รับส่งข้อมูลเสียงผ่าน Windows Shared Memory
+        └── scripts/prepare-dependencies.ps1        # สคริปต์ติดตั้งไลบรารี iPlug2 และ VST3 SDK
 ```
 
-### 下载模型
+---
 
-```bash
-python -m pip install --upgrade huggingface_hub
+## 🚀 3. ขั้นตอนการติดตั้งและเปิดใช้งาน (Deployment & Execution)
 
-# Required for inference and feature extraction
-hf download lj1995/VoiceConversionWebUI --revision main \
-  --include "hubert_base/*" --local-dir assets
-hf download lj1995/VoiceConversionWebUI rmvpe.pt --revision main \
-  --local-dir assets/rmvpe
+### 3.1 การเริ่มต้นระบบครั้งแรก
+1. ตรวจสอบว่ามีโฟลเดอร์ `runtime\` ซึ่งบรรจุ **Python 3.12.10 Embedded Runtime** อยู่ในโฟลเดอร์โปรเจกต์
+2. ดับเบิลคลิกที่ไฟล์ **`Start-The-Program.bat`**
+3. ระบบจะทำการตรวจสอบความพร้อมของระบบ และเปิดหน้าต่าง WebUI อัตโนมัติบนพอร์ต **`9378`** (`http://127.0.0.1:9378`)
 
-# Required for v1/v2 training
-hf download lj1995/VoiceConversionWebUI --revision main \
-  --include "pretrained/*" "pretrained_v2/*" --local-dir assets
-hf download lj1995/VoiceConversionWebUI mute.zip --revision main \
-  --local-dir .model-downloads
-python -m zipfile -e .model-downloads/mute.zip logs
+### 3.2 การดาวน์โหลดและตรวจสอบโมเดลพื้นฐานอัตโนมัติ (Model Assets Verification)
+1. ดับเบิลคลิกที่ไฟล์ **`Check-And-Download-Tools.bat`**
+2. ระบบจะตรวจสอบโมเดลพื้นฐานทั้งหมด (HuBERT, RMVPE, UVR5 Weights, Pretrained v1/v2) และดาวน์โหลดส่วนที่ขาดหายโดยอัตโนมัติด้วยระบบสำรอง 4 ระดับ (Aria2 → Python urllib → curl → PowerShell)
 
-# Required only for pymss/MSST vocal separation
-hf download lj1995/VoiceConversionWebUI --revision main \
-  --include "pymss_weights/*" --local-dir assets
-```
+### 3.3 การฝึกสอนโมเดลเสียงใหม่ (Model Training)
+1. นำไฟล์เสียงคุณภาพสูง (.wav) จัดวางลงในโฟลเดอร์ที่ต้องการ
+2. ลากโฟลเดอร์เสียงไปวางทับไฟล์ **`Train_Studio_Runner.bat`**
+3. ระบบจะทำความสะอาดไฟล์ขยะ สกัดเสียง และเริ่มการฝึกสอนบน DDP พอร์ต `9379` อย่างปลอดภัย พร้อมระบบ Anti-Phantom Indexing Guard
 
-仅 Windows AMD/Intel DirectML 环境还需要：
+### 3.4 การใช้งานในโปรแกรมทำเพลง (DAW / VST Integration)
+1. คอมไพล์หรือนำไฟล์ VST3 จาก `RVCRealtimeVST` ไปวางในโฟลเดอร์ปลั๊กอินของระบบ (`C:\Program Files\Common Files\VST3`)
+2. เปิดปลั๊กอินในโปรแกรมทำเพลง (เช่น Studio One, Cubase, FL Studio, Reaper)
+3. ปลั๊กอินจะเชื่อมต่อกับ `worker\rvc_worker.py` ผ่าน Windows Shared Memory โดยไม่ต้องตั้งค่าเครือข่าย
 
-```bash
-hf download lj1995/VoiceConversionWebUI rmvpe.onnx --revision main \
-  --local-dir assets/rmvpe
-```
+---
 
-### FFmpeg
+## 🤖 4. ข้อกำหนดสำหรับ AI Agent ที่เข้ามาร่วมพัฒนา (Multi-Agent Directives)
 
-Ubuntu 已在前面的系统依赖命令中安装 FFmpeg。Windows 用户可把下面两个文件放到项目根目录：
+เพื่อให้โมเดล AI ทุกรุ่น (Claude, Gemini, ChatGPT, Spark, DeepSeek ฯลฯ) สามารถร่วมมือพัฒนาและสานต่องานได้อย่างราบรื่น **ต้องยึดถือกฎต่อไปนี้เป็นอันขาด** (ดูรายละเอียดเพิ่มเติมใน [SPARK_THAI_RVC_BLUEPRINT.md](file:///A:/Thai_RVC_WebUI_v1/SPARK_THAI_RVC_BLUEPRINT.md)):
 
-- [ffmpeg.exe](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/ffmpeg.exe?download=true)
-- [ffprobe.exe](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/ffprobe.exe?download=true)
+1. **ห้ามลบโค้ดเดิมแล้วเขียนใหม่ (Preserve Before Replace):** ให้อ่านและทำความเข้าใจลอจิกเดิมก่อนเสมอ การปรับปรุงต้องเป็นแบบผ่าตัดเฉพาะจุด (Surgical Edits)
+2. **การฟอกค่า Speaker ID (`sid`):** ต้องครอบด้วย `try: int(sid) except: 0` ก่อนแปลงเป็น `torch.tensor` เสมอ
+3. **ห้ามเขียน `times += elapsed`:** ในไฟล์ประมวลผลเวลา เช่น `infer/modules/vc/pipeline.py` ตัวแปร `times` เป็น `list` ห้ามบวกค่าตรงๆ ให้ระบุตำแหน่ง Index เช่น `times[0] += elapsed` เสมอ
+4. **การจัดขอบเขต Tensor (Tensor Clamping):** เมื่อทำการสังเคราะห์เสียง ต้องใช้ `min(feat_len, p_len)` เพื่อป้องกันปัญหาขนาดมิติไม่ตรงกัน (`Shape Mismatch`)
+5. **การคืนหน่วยความจำ VRAM (Garbage Collection):** ทุกกระบวนการที่มีการใช้งาน PyTorch ต้องมีการเรียกคืน VRAM ในบล็อก `finally:` เสมอ
+6. **การตรวจสอบความถูกต้อง (Verification Gate):** รันคำสั่ง `runtime\python.exe -m py_compile [TargetFile]` ทุกครั้งก่อนส่งมอบงาน โดยต้องได้ผลลัพธ์ผ่าน 100% ไร้ข้อผิดพลาด
 
-## 开始使用
+---
 
-启动 WebUI：
-
-```bash
-python webui.py
-```
-
-无桌面的 Ubuntu 服务器：
-
-```bash
-python webui.py --noautoopen
-```
-
-默认服务监听端口为 `7865`。用户自己的 `.pth` 模型放入 `assets/weights/`，`.index` 文件放入 `assets/indices/`。
-
-## 参考项目
-+ [ContentVec](https://github.com/auspicious3000/contentvec/)
-+ [VITS](https://github.com/jaywalnut310/vits)
-+ [HIFIGAN](https://github.com/jik876/hifi-gan)
-+ [Gradio](https://github.com/gradio-app/gradio)
-+ [FFmpeg](https://github.com/FFmpeg/FFmpeg)
-+ [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)
-+ [pymss-project/pymss](https://github.com/pymss-project/pymss)
-+ [audio-slicer](https://github.com/openvpi/audio-slicer)
-+ [Vocal pitch extraction:RMVPE](https://github.com/Dream-High/RMVPE)
-  + The pretrained model is trained and tested by [yxlllc](https://github.com/yxlllc/RMVPE) and [RVC-Boss](https://github.com/RVC-Boss).
-
-## 感谢所有贡献者作出的努力
-<a href="https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/graphs/contributors" target="_blank">
-  <img src="https://contrib.rocks/image?repo=RVC-Project/Retrieval-based-Voice-Conversion-WebUI" />
-</a>
+## 🏆 5. เครดิตและการอ้างอิงลิขสิทธิ์ (Credits & Ownership)
+- **Project Architect & Maintainer:** Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+- **Original Authors & Contributors:** Patiphat Wongyai (Delta), RVC Project Community, and OpenVPI DiffSinger Team
+- **License:** MIT License (ดูรายละเอียดเพิ่มเติมใน `All Documents/LICENSE_MIT_TH_EN.md`)

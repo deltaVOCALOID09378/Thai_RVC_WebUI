@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# File: utils.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\uvr5_pack\utils.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# ชื่อไฟล์โค้ด (File Name)     : utils.py
+# เวอร์ชั่นโค้ด (Version)      : 1.2 (UVR5 Spectrogram Padding & Window Inference Utilities)
+# ตำแหน่งจัดเก็บ (Location)   : infer/lib/uvr5_pack/utils.py
+# หน้าที่ (Function/Role)     : ฟังก์ชันเสริมสำหรับคำนวณ Spectrogram และการแบ่งหน้าต่างประมวลผลของ UVR5
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 import json
 
 import numpy as np

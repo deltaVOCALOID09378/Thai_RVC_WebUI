@@ -77,7 +77,7 @@ config.py文件里device cuda:后面选择卡号；<br>
 
 
 ## Q13:如何中断和继续训练
-现阶段只能关闭WebUI控制台双击go-webui.bat重启程序。网页参数也要刷新重新填写；<br>
+现阶段只能关闭WebUI控制台双击go-web.bat重启程序。网页参数也要刷新重新填写；<br>
 继续训练：相同网页参数点训练模型，就会接着上次的checkpoint继续训练。<br>
 
 ## Q14:训练时出现文件页面/内存error

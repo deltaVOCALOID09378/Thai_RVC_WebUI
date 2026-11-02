@@ -324,14 +324,14 @@ public partial class MainWindow : Window
     {
         if (CmbInferenceModel.SelectedItem == null)
         {
-            MessageBox.Show("กรุณาเลือกโมเดลเสียงก่อนเริ่มการแปลง", "ข้อผิดพลาด", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("กรุณาเลือกโมเดลเสียงก่อนเริ่มการแปลง (Please select a voice model)", "ข้อผิดพลาด", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         string inputPath = TxtInputAudioPath.Text.Trim();
         if (string.IsNullOrEmpty(inputPath) || !File.Exists(inputPath))
         {
-            MessageBox.Show("กรุณาระบุไฟล์เสียงต้นฉบับที่ถูกต้อง", "ข้อผิดพลาด", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("กรุณาระบุไฟล์เสียงต้นฉบับที่ถูกต้องและมีอยู่จริง (Audio file not found)", "ข้อผิดพลาด", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -341,21 +341,53 @@ public partial class MainWindow : Window
 
         try
         {
-            // Use Python WebUI engine or direct python CLI
             string modelName = CmbInferenceModel.SelectedItem.ToString() ?? "";
             int pitch = (int)SliderPitch.Value;
             string f0Method = (CmbF0Method.SelectedItem as ComboBoxItem)?.Content.ToString()?.Split(' ')[0] ?? "rmvpe";
 
+            string outDir = string.IsNullOrWhiteSpace(TxtExportAudioDir.Text)
+                ? Path.Combine(_scannerService.ProjectRoot, "opt")
+                : TxtExportAudioDir.Text.Trim();
+            Directory.CreateDirectory(outDir);
+
+            string outFileName = $"{Path.GetFileNameWithoutExtension(inputPath)}_{Path.GetFileNameWithoutExtension(modelName)}.wav";
+            string optPath = Path.Combine(outDir, outFileName);
+
             AppendLog($"• โมเดล (Model): {modelName}", false);
-            AppendLog($"• คีย์เสียง (Pitch): {pitch} | อัลกอริทึม: {f0Method}", false);
-            AppendLog($"• ไฟล์เสียง (Input): {inputPath}", false);
+            AppendLog($"• คีย์เสียง (Pitch): {pitch:+0;-0;0} | อัลกอริทึม: {f0Method}", false);
+            AppendLog($"• ไฟล์เสียงต้นทาง (Input): {inputPath}", false);
+            AppendLog($"• ตำแหน่งส่งออก (Output): {optPath}", false);
 
-            // Execute via Python CLI bridge
+            string indexArg = "";
+            if (CmbInferenceIndex.SelectedIndex > 0 && CmbInferenceIndex.SelectedItem != null)
+            {
+                string idxPath = CmbInferenceIndex.SelectedItem.ToString()!;
+                if (File.Exists(idxPath))
+                {
+                    indexArg = $"--index_path \"{idxPath}\"";
+                }
+            }
+
+            string cliArgs = $"--model_name \"{modelName}\" --input_path \"{inputPath}\" --opt_path \"{optPath}\" --f0up_key {pitch} --f0method {f0Method} --index_rate {SliderIndexRate.Value:0.00} --rms_mix_rate {SliderRmsMix.Value:0.00} --protect {SliderProtect.Value:0.00} {indexArg}".Trim();
+
             _activeTaskCts = new CancellationTokenSource();
-            string cliArgs = $"-c \"import sys; print('🟢 Voice Conversion Process Ready: Model {modelName}')\"";
-            await _engineService.RunScriptAsync("configs/config.py", cliArgs, _activeTaskCts.Token);
+            int exitCode = await _engineService.RunScriptAsync("tools/infer_cli.py", cliArgs, _activeTaskCts.Token);
 
-            ShowToast("การแปลงเสียงสำเร็จ", $"ส่งออกไปยัง: {TxtExportAudioDir.Text}");
+            if (exitCode == 0 && File.Exists(optPath))
+            {
+                ShowToast("การแปลงเสียงสำเร็จ", $"บันทึกที่: {outFileName}");
+                AppendLog($"✅ [SUCCESS] การแปลงเสียงสำเร็จ บันทึกไฟล์ที่: {optPath}", false);
+            }
+            else if (exitCode != 0)
+            {
+                ShowToast("การแปลงเสียงไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [ERROR] การแปลงเสียงยุติด้วยข้อผิดพลาด (Exit code: {exitCode})", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [CANCEL] การแปลงเสียงถูกยกเลิกโดยผู้ใช้", true);
+            ShowToast("ยกเลิกงาน", "กระบวนการแปลงเสียงถูกยกเลิกแล้ว", isError: true);
         }
         catch (Exception ex)
         {
@@ -420,8 +452,21 @@ public partial class MainWindow : Window
         {
             _activeTaskCts = new CancellationTokenSource();
             string args = $"\"{datasetDir}\"";
-            await _engineService.RunScriptAsync("dataset_auto_cleaner.py", args, _activeTaskCts.Token);
-            ShowToast("ทำความสะอาดสำเร็จ", "ดาต้าเซ็ตพร้อมสำหรับการฝึกสอน 100%");
+            int exitCode = await _engineService.RunScriptAsync("tools/dataset_auto_cleaner.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("ทำความสะอาดสำเร็จ", "ดาต้าเซ็ตพร้อมสำหรับการฝึกสอน 100%");
+                AppendLog("✅ [SUCCESS] ทำความสะอาดชุดข้อมูลเสียงและขจัดไฟล์ขยะเรียบร้อย", false);
+            }
+            else
+            {
+                ShowToast("ทำความสะอาดไม่สมบูรณ์", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [ERROR] การทำความสะอาดชุดข้อมูลยุติด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [CANCEL] การทำความสะอาดถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
@@ -591,127 +636,346 @@ public partial class MainWindow : Window
 
     private async void BtnDsStep1Autoclean_Click(object sender, RoutedEventArgs e)
     {
+        string datasetDir = TxtDsDatasetDir.Text.Trim();
+        if (string.IsNullOrEmpty(datasetDir))
+        {
+            MessageBox.Show("กรุณาระบุโฟลเดอร์ชุดข้อมูลเสียงดิบ (Please specify raw dataset directory)", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string fullDatasetDir = Path.IsPathRooted(datasetDir) ? datasetDir : Path.Combine(_scannerService.ProjectRoot, datasetDir);
+        if (!Directory.Exists(fullDatasetDir))
+        {
+            MessageBox.Show($"ไม่พบโฟลเดอร์ชุดข้อมูลที่ระบุ:\n{fullDatasetDir}\nกรุณาตรวจสอบเส้นทางโฟลเดอร์อีกครั้ง", "ไม่พบโฟลเดอร์ (Directory Not Found)", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep1Autoclean.IsEnabled = false;
         try
         {
-            AppendLog($"🧹 [DiffSinger] เริ่มต้นทำความสะอาดดาต้าเซ็ต: {TxtDsDatasetDir.Text}", false);
+            AppendLog($"🧹 [DiffSinger] ขั้นตอนที่ 1: เริ่มต้นทำความสะอาดดาต้าเซ็ต: {fullDatasetDir}", false);
             ShowToast("Autoclean", "กำลังทำความสะอาดและตรวจสอบสุขภาพเสียง...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py autoclean --dataset \"{TxtDsDatasetDir.Text}\"";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("Autoclean สำเร็จ", "ตรวจสอบและขจัด DC offset เรียบร้อย");
+            string args = $"autoclean --dataset \"{fullDatasetDir}\"";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("Autoclean สำเร็จ", "ตรวจสอบและขจัด DC offset เรียบร้อย");
+                AppendLog("✅ [DiffSinger] ขั้นตอนที่ 1 (Autoclean) เสร็จสมบูรณ์พร้อมไปยังขั้นตอนถัดไป", false);
+            }
+            else
+            {
+                ShowToast("Autoclean ไม่สมบูรณ์", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 1 (Autoclean) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การทำความสะอาดชุดข้อมูลถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Autoclean: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep1Autoclean.IsEnabled = true;
         }
     }
 
     private async void BtnDsStep2Dict_Click(object sender, RoutedEventArgs e)
     {
+        string datasetDir = TxtDsDatasetDir.Text.Trim();
+        if (string.IsNullOrEmpty(datasetDir))
+        {
+            MessageBox.Show("กรุณาระบุโฟลเดอร์ชุดข้อมูลเสียงสำหรับสแกนพจนานุกรม", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string fullDatasetDir = Path.IsPathRooted(datasetDir) ? datasetDir : Path.Combine(_scannerService.ProjectRoot, datasetDir);
+        if (!Directory.Exists(fullDatasetDir))
+        {
+            MessageBox.Show($"ไม่พบโฟลเดอร์ชุดข้อมูล:\n{fullDatasetDir}", "ไม่พบโฟลเดอร์", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep2Dict.IsEnabled = false;
         try
         {
-            AppendLog($"🧬 [DiffSinger] เริ่มต้นสแกนและตรวจสอบ Dictionary: {TxtDsDatasetDir.Text}", false);
+            AppendLog($"🧬 [DiffSinger] ขั้นตอนที่ 2: เริ่มต้นสแกนและตรวจสอบ Dictionary: {fullDatasetDir}", false);
             ShowToast("Dictionary & Rule 10", "กำลังสร้าง dsdict.yaml และ phonemes.txt...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py dict --dataset \"{TxtDsDatasetDir.Text}\"";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("Dictionary สำเร็จ", "จัดทำหน่วยเสียงตาม Rule 10 เรียบร้อย");
+            string args = $"dict --dataset \"{fullDatasetDir}\"";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("Dictionary สำเร็จ", "จัดทำหน่วยเสียงตาม Rule 10 เรียบร้อย");
+                AppendLog("✅ [DiffSinger] ขั้นตอนที่ 2 (Dictionary & Phonemes) สำเร็จสมบูรณ์", false);
+            }
+            else
+            {
+                ShowToast("Dictionary ไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 2 (Dictionary) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การจัดทำพจนานุกรมถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Dictionary: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep2Dict.IsEnabled = true;
         }
     }
 
     private async void BtnDsStep3Binarize_Click(object sender, RoutedEventArgs e)
     {
+        string cfgPath = TxtDsAcousticCfg.Text.Trim();
+        if (string.IsNullOrEmpty(cfgPath))
+        {
+            MessageBox.Show("กรุณาระบุไฟล์คอนฟิก Acoustic YAML สำหรับการ Binarize", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string fullCfgPath = Path.IsPathRooted(cfgPath) ? cfgPath : Path.Combine(_scannerService.ProjectRoot, cfgPath);
+        if (!File.Exists(fullCfgPath))
+        {
+            MessageBox.Show($"ไม่พบไฟล์คอนฟิก:\n{fullCfgPath}\nกรุณาเลือกไฟล์ YAML ที่ถูกต้อง", "ไม่พบไฟล์คอนฟิก", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep3Binarize.IsEnabled = false;
         try
         {
-            AppendLog($"⚡ [DiffSinger] เริ่มต้นการ Binarize ด้วยคอนฟิก: {TxtDsAcousticCfg.Text}", false);
+            AppendLog($"⚡ [DiffSinger] ขั้นตอนที่ 3: เริ่มต้นการ Binarize ด้วยคอนฟิก: {fullCfgPath}", false);
             ShowToast("Binarize", "กำลังแปลงฟีเจอร์เสียงเป็นไบนารี...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py binarize --config \"{TxtDsAcousticCfg.Text}\"";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("Binarize สำเร็จ", "สกัด Mel Spectrogram และ F0 เรียบร้อย");
+            string args = $"binarize --config \"{fullCfgPath}\"";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("Binarize สำเร็จ", "สกัด Mel Spectrogram และ F0 เรียบร้อย");
+                AppendLog("✅ [DiffSinger] ขั้นตอนที่ 3 (Binarize) สำเร็จสมบูรณ์", false);
+            }
+            else
+            {
+                ShowToast("Binarize ไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 3 (Binarize) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การ Binarize ถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในขั้นตอน Binarize: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep3Binarize.IsEnabled = true;
         }
     }
 
     private async void BtnDsStep4Train_Click(object sender, RoutedEventArgs e)
     {
+        string exp = TxtDsExpName.Text.Trim();
+        if (string.IsNullOrEmpty(exp))
+        {
+            MessageBox.Show("กรุณาระบุชื่อการทดลอง / โมเดล (Experiment Name)", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string cfgPath = TxtDsAcousticCfg.Text.Trim();
+        string fullCfgPath = Path.IsPathRooted(cfgPath) ? cfgPath : Path.Combine(_scannerService.ProjectRoot, cfgPath);
+        if (!File.Exists(fullCfgPath))
+        {
+            MessageBox.Show($"ไม่พบไฟล์คอนฟิกสำหรับฝึกสอน:\n{fullCfgPath}", "ไม่พบไฟล์คอนฟิก", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep4Train.IsEnabled = false;
         try
         {
-            string exp = TxtDsExpName.Text.Trim();
-            AppendLog($"🏋️ [DiffSinger] เริ่มต้นการฝึกสอนโมเดล: {exp}", false);
+            int batchSize = int.TryParse(TxtDsBatchSize.Text.Trim(), out int bs) ? bs : 16;
+            AppendLog($"🏋️ [DiffSinger] ขั้นตอนที่ 4: เริ่มต้นการฝึกสอนโมเดล: {exp} (Batch: {batchSize})", false);
             ShowToast("กำลังฝึกสอน DiffSinger", $"โครงการ {exp} กำลังเทรน...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py train --config \"{TxtDsAcousticCfg.Text}\" --exp_name \"{exp}\" --batch {TxtDsBatchSize.Text}";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("ฝึกสอนสำเร็จ", $"โมเดล {exp} ฝึกสอนเสร็จสิ้น");
+            string args = $"train --config \"{fullCfgPath}\" --exp_name \"{exp}\" --batch {batchSize}";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("ฝึกสอนสำเร็จ", $"โมเดล {exp} ฝึกสอนเสร็จสิ้น");
+                AppendLog($"✅ [DiffSinger] ขั้นตอนที่ 4 (Training) สำหรับโมเดล '{exp}' สำเร็จสมบูรณ์", false);
+            }
+            else
+            {
+                ShowToast("การฝึกสอนไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 4 (Training) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การฝึกสอนโมเดลถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในการฝึกสอน: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep4Train.IsEnabled = true;
         }
     }
 
     private async void BtnDsStep5Export_Click(object sender, RoutedEventArgs e)
     {
+        string exp = TxtDsExpName.Text.Trim();
+        if (string.IsNullOrEmpty(exp))
+        {
+            MessageBox.Show("กรุณาระบุชื่อโครงการ / โมเดลที่ต้องการส่งออก ONNX", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep5Export.IsEnabled = false;
         try
         {
-            string exp = TxtDsExpName.Text.Trim();
-            AppendLog($"📦 [DiffSinger] เริ่มต้นการส่งออกโมเดล ONNX: {exp}", false);
+            AppendLog($"📦 [DiffSinger] ขั้นตอนที่ 5: เริ่มต้นการส่งออกโมเดล ONNX สำหรับ: {exp}", false);
             ShowToast("ส่งออก ONNX", "กำลังแปลง Checkpoint เป็นโมเดล ONNX...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py export --exp_name \"{exp}\" --type acoustic";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("ส่งออก ONNX สำเร็จ", "สร้าง acoustic.onnx เรียบร้อยแล้ว");
+            string args = $"export --exp_name \"{exp}\" --type acoustic";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("ส่งออก ONNX สำเร็จ", "สร้าง acoustic.onnx เรียบร้อยแล้ว");
+                AppendLog($"✅ [DiffSinger] ขั้นตอนที่ 5 (Export ONNX) สำหรับ '{exp}' สำเร็จสมบูรณ์", false);
+            }
+            else
+            {
+                ShowToast("ส่งออก ONNX ไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 5 (Export ONNX) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การส่งออก ONNX ถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในการส่งออก ONNX: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep5Export.IsEnabled = true;
         }
     }
 
     private async void BtnDsStep6Package_Click(object sender, RoutedEventArgs e)
     {
+        string exp = TxtDsExpName.Text.Trim();
+        string targetDir = TxtOpenUtauVbDir.Text.Trim();
+        if (string.IsNullOrEmpty(exp) || string.IsNullOrEmpty(targetDir))
+        {
+            MessageBox.Show("กรุณาระบุชื่อโครงการและโฟลเดอร์ปลายทางสำหรับ OpenUtau Voicebank", "แจ้งเตือน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        BtnDsStep6Package.IsEnabled = false;
         try
         {
-            string exp = TxtDsExpName.Text.Trim();
-            string targetDir = TxtOpenUtauVbDir.Text.Trim();
-            AppendLog($"🎵 [DiffSinger] กำลังจัดทำ Voicebank สำหรับ OpenUtau: {targetDir}", false);
+            AppendLog($"🎵 [DiffSinger] ขั้นตอนที่ 6: กำลังจัดทำ Voicebank สำหรับ OpenUtau: {targetDir}", false);
             ShowToast("สร้าง Voicebank", "ประกอบไฟล์ dsconfig.yaml และ character.yaml...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py package --exp_name \"{exp}\" --out \"{targetDir}\"";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("Voicebank พร้อมใช้งาน", "นำโฟลเดอร์ไปใช้งานใน OpenUtau ได้ทันที");
+            string args = $"package --exp_name \"{exp}\" --out \"{targetDir}\"";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("Voicebank พร้อมใช้งาน", "นำโฟลเดอร์ไปใช้งานใน OpenUtau ได้ทันที");
+                AppendLog($"✅ [DiffSinger] ขั้นตอนที่ 6 (OpenUtau Voicebank Packaging) สำเร็จสมบูรณ์!", false);
+            }
+            else
+            {
+                ShowToast("จัดทำ Voicebank ไม่สำเร็จ", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] ขั้นตอนที่ 6 (Packaging) สิ้นสุดด้วยรหัส: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] การจัดทำ Voicebank ถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดในการจัดทำ Voicebank: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsStep6Package.IsEnabled = true;
         }
     }
 
     private async void BtnDsRunMasterPipeline_Click(object sender, RoutedEventArgs e)
     {
+        string exp = TxtDsExpName.Text.Trim();
+        string dataset = TxtDsDatasetDir.Text.Trim();
+        string targetDir = TxtOpenUtauVbDir.Text.Trim();
+
+        if (string.IsNullOrEmpty(exp) || string.IsNullOrEmpty(dataset))
+        {
+            MessageBox.Show("กรุณาระบุชื่อโครงการและโฟลเดอร์ชุดข้อมูลเสียงดิบก่อนเริ่ม 1-Click Master Pipeline", "ข้อมูลไม่ครบถ้วน", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string fullDatasetDir = Path.IsPathRooted(dataset) ? dataset : Path.Combine(_scannerService.ProjectRoot, dataset);
+        if (!Directory.Exists(fullDatasetDir))
+        {
+            MessageBox.Show($"ไม่พบโฟลเดอร์ชุดข้อมูลเสียงดิบ:\n{fullDatasetDir}", "ไม่พบโฟลเดอร์", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        string fullAcousticCfg = Path.IsPathRooted(TxtDsAcousticCfg.Text.Trim()) ? TxtDsAcousticCfg.Text.Trim() : Path.Combine(_scannerService.ProjectRoot, TxtDsAcousticCfg.Text.Trim());
+        string fullVarianceCfg = Path.IsPathRooted(TxtDsVarianceCfg.Text.Trim()) ? TxtDsVarianceCfg.Text.Trim() : Path.Combine(_scannerService.ProjectRoot, TxtDsVarianceCfg.Text.Trim());
+
+        BtnDsRunMasterPipeline.IsEnabled = false;
         try
         {
-            string exp = TxtDsExpName.Text.Trim();
-            string dataset = TxtDsDatasetDir.Text.Trim();
-            string targetDir = TxtOpenUtauVbDir.Text.Trim();
-            AppendLog($"🚀 [DiffSinger] เริ่มต้นกระบวนการ 1-Click Master Pipeline แบบเต็มระบบ!", false);
+            AppendLog($"🚀 [DiffSinger] เริ่มต้นกระบวนการ 1-Click Master Pipeline แบบเต็มระบบ! (โครงการ: {exp})", false);
             ShowToast("1-Click Master Pipeline", "กำลังดำเนินงานตั้งแต่เริ่มต้นจนจบ...");
             _activeTaskCts = new CancellationTokenSource();
-            string args = $"tools/diffsinger/diffsinger_pipeline_master.py pipeline --dataset \"{dataset}\" --exp_name \"{exp}\" --out \"{targetDir}\" --acoustic_cfg \"{TxtDsAcousticCfg.Text}\" --variance_cfg \"{TxtDsVarianceCfg.Text}\"";
-            await _engineService.RunScriptAsync("runtime/python.exe", args, _activeTaskCts.Token);
-            ShowToast("1-Click สำเร็จสมบูรณ์", "โมเดลและ Voicebank พร้อมใช้งาน 100%");
+            string args = $"pipeline --dataset \"{fullDatasetDir}\" --exp_name \"{exp}\" --out \"{targetDir}\" --acoustic_cfg \"{fullAcousticCfg}\" --variance_cfg \"{fullVarianceCfg}\"";
+            int exitCode = await _engineService.RunScriptAsync("tools/diffsinger/diffsinger_pipeline_master.py", args, _activeTaskCts.Token);
+            if (exitCode == 0)
+            {
+                ShowToast("1-Click สำเร็จสมบูรณ์", "โมเดลและ Voicebank พร้อมใช้งาน 100%");
+                AppendLog($"🎉 [DiffSinger] 1-Click Master Pipeline สำเร็จสมบูรณ์ทุกขั้นตอน! Voicebank พร้อมใช้งาน", false);
+            }
+            else
+            {
+                ShowToast("1-Click ยุติกลางคัน", $"Exit Code: {exitCode}", isError: true);
+                AppendLog($"❌ [DiffSinger] 1-Click Master Pipeline ยุติด้วยรหัสข้อผิดพลาด: {exitCode}", true);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("🛑 [DiffSinger] 1-Click Master Pipeline ถูกยกเลิกโดยผู้ใช้", true);
         }
         catch (Exception ex)
         {
             AppendLog($"🔴 ข้อผิดพลาดใน 1-Click Pipeline: {ex.Message}", true);
+            ShowToast("ข้อผิดพลาด", ex.Message, isError: true);
+        }
+        finally
+        {
+            BtnDsRunMasterPipeline.IsEnabled = true;
         }
     }
 
@@ -722,9 +986,10 @@ public partial class MainWindow : Window
             if (_activeTaskCts != null && !_activeTaskCts.IsCancellationRequested)
             {
                 _activeTaskCts.Cancel();
-                AppendLog("🛑 [DiffSinger] ส่งสัญญาณยกเลิกภารกิจเรียบร้อยแล้ว", true);
-                ShowToast("ยกเลิกภารกิจ", "สั่งยุติกระบวนการทำงาน DiffSinger แล้ว", true);
             }
+            _engineService.CancelActiveTask();
+            AppendLog("🛑 [DiffSinger] ส่งสัญญาณยกเลิกภารกิจเรียบร้อยแล้ว (Process Terminated)", true);
+            ShowToast("ยกเลิกภารกิจ", "สั่งยุติกระบวนการทำงาน DiffSinger แล้ว", isError: true);
         }
         catch (Exception ex)
         {

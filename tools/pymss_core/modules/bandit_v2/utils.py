@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: utils.py
+# Path: tools\pymss_core\modules\bandit_v2\utils.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 from ..bandit.core.model.bsrnn.utils import (
     BandsplitSpecification,
     BassBandsplitSpecification,

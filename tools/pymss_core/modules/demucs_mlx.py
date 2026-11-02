@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: demucs_mlx.py
+# Path: tools\pymss_core\modules\demucs_mlx.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import math
 import numpy as np
 import torch

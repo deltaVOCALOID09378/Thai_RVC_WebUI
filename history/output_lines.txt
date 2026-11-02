@@ -1,0 +1,16 @@
+3: # Version 1.5
+12: #    ผสานระบบรองรับ Auto-Detect Version อย่างสมบูรณ์ พร้อม UI สองภาษา
+23: from infer.modules.uvr5.modules import uvr
+57: shutil.rmtree("%s/runtime/Lib/site-packages/uvr5_pack" % (now_dir), ignore_errors=True)
+114: weight_uvr5_root = os.getenv("weight_uvr5_root", "assets/uvr5_weights")
+118: os.makedirs(weight_uvr5_root, exist_ok=True)
+128: uvr5_names = [name.replace(".pth", "") for name in os.listdir(weight_uvr5_root) if (name.endswith(".pth") or "onnx" in name)] if os.path.exists(weight_uvr5_root) else []
+380: F0GPUVisible = config.dml == False
+382:     return {"visible": (F0GPUVisible if f0method8 == "rmvpe_gpu" else False), "__type__": "update"}
+2037:         with gr.TabItem("เครื่องมือแยกเสียง (UVR5 Separation & De-Echo)"):
+2039:                 gr.Markdown("ระบบแยกเสียงร้องและเสียงดนตรี พร้อมเครื่องมือลบเสียงสะท้อน (Vocal/Instrument separation and Dereverb using UVR5 models).")
+2045:                         model_choose = gr.Dropdown(label="เลือกโมเดล (Select Model)", choices=uvr5_names)
+2052:                 but2.click(uvr, [model_choose, dir_wav_input, opt_vocal_root, wav_inputs, opt_ins_root, agg, format0], [vc_output4], api_name="uvr_convert")
+2074:                         gpus6 = gr.Textbox(label="หมายเลข GPU (GPU IDs)", value=gpus, interactive=True, visible=F0GPUVisible)
+2075:                         gpu_info9 = gr.Textbox(label="ข้อมูลระบบฮาร์ดแวร์ (Hardware Info)", value=gpu_info, visible=F0GPUVisible)
+2078:                         gpus_rmvpe = gr.Textbox(label="GPU สำหรับ RMVPE (GPUs for RMVPE)", value="%s-%s" % (gpus, gpus), interactive=True, visible=F0GPUVisible)

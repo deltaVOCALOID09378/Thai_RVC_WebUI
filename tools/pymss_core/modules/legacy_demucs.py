@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: legacy_demucs.py
+# Path: tools\pymss_core\modules\legacy_demucs.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import math
 import random
 import sys

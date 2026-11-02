@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# File: models_onnx.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\infer_pack\models_onnx.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# ชื่อไฟล์โค้ด (File Name)     : models_onnx.py
+# เวอร์ชั่นโค้ด (Version)      : 1.3 (ONNX SynthesizerTrnMsNSFsidM Architecture)
+# ตำแหน่งจัดเก็บ (Location)   : infer/lib/infer_pack/models_onnx.py
+# หน้าที่ (Function/Role)     : นิยามโครงสร้างโมเดล RVC สำหรับการส่งออกเป็นฟอร์แมต ONNX
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 import math
 import logging
 
@@ -18,11 +20,15 @@ from torch.nn import AvgPool1d, Conv1d, Conv2d, ConvTranspose1d
 from torch.nn import functional as F
 from torch.nn.utils import remove_weight_norm, spectral_norm, weight_norm
 
-from infer.lib.infer_pack import attentions, commons, modules
+from infer.lib.infer_pack import commons, modules
+import infer.lib.infer_pack.attentions_onnx as attentions
 from infer.lib.infer_pack.commons import get_padding, init_weights
 
 
 class TextEncoder256(nn.Module):
+    """
+    ตัวเข้ารหัสเสียงและระดับเสียง (Phoneme & Pitch Encoder) สำหรับโมเดล v1 (มิติ 256)
+    """
     def __init__(
         self,
         out_channels,
@@ -44,7 +50,7 @@ class TextEncoder256(nn.Module):
         self.p_dropout = p_dropout
         self.emb_phone = nn.Linear(256, hidden_channels)
         self.lrelu = nn.LeakyReLU(0.1, inplace=True)
-        if f0 == True:
+        if f0:
             self.emb_pitch = nn.Embedding(256, hidden_channels)  # pitch 256
         self.encoder = attentions.Encoder(
             hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout
@@ -52,7 +58,7 @@ class TextEncoder256(nn.Module):
         self.proj = nn.Conv1d(hidden_channels, out_channels * 2, 1)
 
     def forward(self, phone, pitch, lengths):
-        if pitch == None:
+        if pitch is None:
             x = self.emb_phone(phone)
         else:
             x = self.emb_phone(phone) + self.emb_pitch(pitch)
@@ -70,6 +76,9 @@ class TextEncoder256(nn.Module):
 
 
 class TextEncoder768(nn.Module):
+    """
+    ตัวเข้ารหัสเสียงและระดับเสียง (Phoneme & Pitch Encoder) สำหรับโมเดล v2 (มิติ 768)
+    """
     def __init__(
         self,
         out_channels,
@@ -91,7 +100,7 @@ class TextEncoder768(nn.Module):
         self.p_dropout = p_dropout
         self.emb_phone = nn.Linear(768, hidden_channels)
         self.lrelu = nn.LeakyReLU(0.1, inplace=True)
-        if f0 == True:
+        if f0:
             self.emb_pitch = nn.Embedding(256, hidden_channels)  # pitch 256
         self.encoder = attentions.Encoder(
             hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout
@@ -99,7 +108,7 @@ class TextEncoder768(nn.Module):
         self.proj = nn.Conv1d(hidden_channels, out_channels * 2, 1)
 
     def forward(self, phone, pitch, lengths):
-        if pitch == None:
+        if pitch is None:
             x = self.emb_phone(phone)
         else:
             x = self.emb_phone(phone) + self.emb_pitch(pitch)
@@ -117,6 +126,10 @@ class TextEncoder768(nn.Module):
 
 
 class ResidualCouplingBlock(nn.Module):
+    """
+    บล็อกการเชื่อมต่อแบบเรซิดิวอัล (Flow-based Normalizing Flow) 
+    ใช้ปรับการกระจายตัวของข้อมูลเสียงให้เป็นธรรมชาติ
+    """
     def __init__(
         self,
         channels,
@@ -157,7 +170,7 @@ class ResidualCouplingBlock(nn.Module):
                 x, _ = flow(x, x_mask, g=g, reverse=reverse)
         else:
             for flow in reversed(self.flows):
-                x = flow(x, x_mask, g=g, reverse=reverse)
+                x, _ = flow(x, x_mask, g=g, reverse=reverse)
         return x
 
     def remove_weight_norm(self):
@@ -166,6 +179,9 @@ class ResidualCouplingBlock(nn.Module):
 
 
 class PosteriorEncoder(nn.Module):
+    """
+    ตัวเข้ารหัสข้อมูลเสียง (VAE Posterior Encoder)
+    """
     def __init__(
         self,
         in_channels,
@@ -211,6 +227,9 @@ class PosteriorEncoder(nn.Module):
 
 
 class Generator(torch.nn.Module):
+    """
+    ตัวสังเคราะห์เสียง (HiFi-GAN Decoder/Generator) รุ่นปกติ
+    """
     def __init__(
         self,
         initial_channel,
@@ -287,21 +306,10 @@ class Generator(torch.nn.Module):
 
 
 class SineGen(torch.nn.Module):
-    """Definition of sine generator
-    SineGen(samp_rate, harmonic_num = 0,
-            sine_amp = 0.1, noise_std = 0.003,
-            voiced_threshold = 0,
-            flag_for_pulse=False)
-    samp_rate: sampling rate in Hz
-    harmonic_num: number of harmonic overtones (default 0)
-    sine_amp: amplitude of sine-wavefrom (default 0.1)
-    noise_std: std of Gaussian noise (default 0.003)
-    voiced_thoreshold: F0 threshold for U/V classification (default 0)
-    flag_for_pulse: this SinGen is used inside PulseGen (default False)
-    Note: when flag_for_pulse is True, the first time step of a voiced
-        segment is always sin(np.pi) or cos(0)
     """
-
+    ตัวสร้างคลื่นไซน์ (Sine Wave Generator) สำหรับระบบ NSF
+    ช่วยให้โมเดลควบคุมความถี่พื้นฐาน (F0) ได้แม่นยำขึ้น
+    """
     def __init__(
         self,
         samp_rate,
@@ -320,57 +328,34 @@ class SineGen(torch.nn.Module):
         self.voiced_threshold = voiced_threshold
 
     def _f02uv(self, f0):
-        # generate uv signal
         uv = torch.ones_like(f0)
         uv = uv * (f0 > self.voiced_threshold)
+        if uv.device.type == "privateuseone":  # for DirectML
+            uv = uv.float()
         return uv
-
-    def forward(self, f0, upp):
-        """sine_tensor, uv = forward(f0)
-        input F0: tensor(batchsize=1, length, dim=1)
-                  f0 for unvoiced steps should be 0
-        output sine_tensor: tensor(batchsize=1, length, dim)
-        output uv: tensor(batchsize=1, length, 1)
-        """
+    
+    def _f02sine(self, f0, upp):
+        a = torch.arange(1, upp + 1, dtype=f0.dtype, device=f0.device)
+        rad = f0 / self.sampling_rate * a
+        rad2 = torch.fmod(rad[:, :-1, -1:].float() + 0.5, 1.0) - 0.5
+        rad_acc = rad2.cumsum(dim=1).fmod(1.0).to(f0)
+        rad += F.pad(rad_acc, (0, 0, 1, 0), mode='constant')
+        rad = rad.reshape(f0.shape[0], -1, 1)
+        b = torch.arange(1, self.dim + 1, dtype=f0.dtype, device=f0.device).reshape(1, 1, -1)
+        rad *= b
+        rand_ini = torch.rand(1, 1, self.dim, device=f0.device)
+        rand_ini[..., 0] = 0
+        rad += rand_ini
+        sines = torch.sin(2 * np.pi * rad)
+        return sines
+        
+    def forward(self, f0: torch.Tensor, upp: int):
         with torch.no_grad():
-            f0 = f0[:, None].transpose(1, 2)
-            f0_buf = torch.zeros(f0.shape[0], f0.shape[1], self.dim, device=f0.device)
-            # fundamental component
-            f0_buf[:, :, 0] = f0[:, :, 0]
-            for idx in np.arange(self.harmonic_num):
-                f0_buf[:, :, idx + 1] = f0_buf[:, :, 0] * (
-                    idx + 2
-                )  # idx + 2: the (idx+1)-th overtone, (idx+2)-th harmonic
-            rad_values = (f0_buf / self.sampling_rate) % 1  # % 1 means n_har product cannot be post-processed
-            rand_ini = torch.rand(
-                f0_buf.shape[0], f0_buf.shape[2], device=f0_buf.device
-            )
-            rand_ini[:, 0] = 0
-            rad_values[:, 0, :] = rad_values[:, 0, :] + rand_ini
-            tmp_over_one = torch.cumsum(rad_values, 1)  # % 1  # % 1 means following cumsum cannot be optimized
-            tmp_over_one *= upp
-            tmp_over_one = F.interpolate(
-                tmp_over_one.transpose(2, 1),
-                scale_factor=upp,
-                mode="linear",
-                align_corners=True,
-            ).transpose(2, 1)
-            rad_values = F.interpolate(
-                rad_values.transpose(2, 1), scale_factor=upp, mode="nearest"
-            ).transpose(
-                2, 1
-            )  #######
-            tmp_over_one %= 1
-            tmp_over_one_idx = (tmp_over_one[:, 1:, :] - tmp_over_one[:, :-1, :]) < 0
-            cumsum_shift = torch.zeros_like(rad_values)
-            cumsum_shift[:, 1:, :] = tmp_over_one_idx * -1.0
-            sine_waves = torch.sin(
-                torch.cumsum(rad_values + cumsum_shift, dim=1) * 2 * np.pi
-            )
-            sine_waves = sine_waves * self.sine_amp
+            f0 = f0.unsqueeze(-1)
+            sine_waves = self._f02sine(f0, upp) * self.sine_amp
             uv = self._f02uv(f0)
             uv = F.interpolate(
-                uv.transpose(2, 1), scale_factor=upp, mode="nearest"
+                uv.transpose(2, 1), scale_factor=float(upp), mode="nearest"
             ).transpose(2, 1)
             noise_amp = uv * self.noise_std + (1 - uv) * self.sine_amp / 3
             noise = noise_amp * torch.randn_like(sine_waves)
@@ -379,23 +364,9 @@ class SineGen(torch.nn.Module):
 
 
 class SourceModuleHnNSF(torch.nn.Module):
-    """SourceModule for hn-nsf
-    SourceModule(sampling_rate, harmonic_num=0, sine_amp=0.1,
-                 add_noise_std=0.003, voiced_threshod=0)
-    sampling_rate: sampling_rate in Hz
-    harmonic_num: number of harmonic above F0 (default: 0)
-    sine_amp: amplitude of sine source signal (default: 0.1)
-    add_noise_std: std of additive Gaussian noise (default: 0.003)
-        note that amplitude of noise in unvoiced is decided
-        by sine_amp
-    voiced_threshold: threhold to set U/V given F0 (default: 0)
-    Sine_source, noise_source = SourceModuleHnNSF(F0_sampled)
-    F0_sampled (batchsize, length, 1)
-    Sine_source (batchsize, length, 1)
-    noise_source (batchsize, length 1)
-    uv (batchsize, length, 1)
     """
-
+    โมดูลจัดการแหล่งกำเนิดเสียง (Source Module) สำหรับ Neural Source Filter (NSF)
+    """
     def __init__(
         self,
         sampling_rate,
@@ -410,12 +381,9 @@ class SourceModuleHnNSF(torch.nn.Module):
         self.sine_amp = sine_amp
         self.noise_std = add_noise_std
         self.is_half = is_half
-        # to produce sine waveforms
         self.l_sin_gen = SineGen(
             sampling_rate, harmonic_num, sine_amp, add_noise_std, voiced_threshod
         )
-
-        # to merge source harmonics into a single excitation
         self.l_linear = torch.nn.Linear(harmonic_num + 1, 1)
         self.l_tanh = torch.nn.Tanh()
 
@@ -428,6 +396,9 @@ class SourceModuleHnNSF(torch.nn.Module):
 
 
 class GeneratorNSF(torch.nn.Module):
+    """
+    ตัวสังเคราะห์เสียงหลัก (HiFi-GAN + NSF) ทำหน้าที่แปลงข้อมูลกลับมาเป็นคลื่นเสียง (Waveform)
+    """
     def __init__(
         self,
         initial_channel,
@@ -538,6 +509,10 @@ sr2sr = {
 
 
 class SynthesizerTrnMsNSFsidM(nn.Module):
+    """
+    คลาสโมเดลหลัก (Main Model Wrapper) ที่รวมเอนโค้ดเดอร์และเจเนอเรเตอร์เข้าด้วยกัน
+    ถูกออกแบบมาเพื่อรองรับการทำงานบน ONNX โดยเฉพาะ
+    """
     def __init__(
         self,
         spec_channels,
@@ -562,7 +537,7 @@ class SynthesizerTrnMsNSFsidM(nn.Module):
         **kwargs,
     ):
         super().__init__()
-        if type(sr) == type("strr"):
+        if isinstance(sr, str):
             sr = sr2sr[sr]
         self.spec_channels = spec_channels
         self.inter_channels = inter_channels
@@ -580,8 +555,8 @@ class SynthesizerTrnMsNSFsidM(nn.Module):
         self.upsample_kernel_sizes = upsample_kernel_sizes
         self.segment_size = segment_size
         self.gin_channels = gin_channels
-        # self.hop_length = hop_length#
         self.spk_embed_dim = spk_embed_dim
+        
         if version == "v1":
             self.enc_p = TextEncoder256(
                 inter_channels,
@@ -602,6 +577,7 @@ class SynthesizerTrnMsNSFsidM(nn.Module):
                 kernel_size,
                 p_dropout,
             )
+            
         self.dec = GeneratorNSF(
             inter_channels,
             resblock,
@@ -644,11 +620,11 @@ class SynthesizerTrnMsNSFsidM(nn.Module):
         self.speaker_map = self.speaker_map.unsqueeze(0)
 
     def forward(self, phone, phone_lengths, pitch, nsff0, g, rnd, max_len=None):
-        if self.speaker_map is not None:  # [N, S]  *  [S, B, 1, H]
-            g = g.reshape((g.shape[0], g.shape[1], 1, 1, 1))  # [N, S, B, 1, 1]
-            g = g * self.speaker_map  # [N, S, B, 1, H]
-            g = torch.sum(g, dim=1)  # [N, 1, B, 1, H]
-            g = g.transpose(0, -1).transpose(0, -2).squeeze(0)  # [B, H, N]
+        if self.speaker_map is not None:
+            g = g.reshape((g.shape[0], g.shape[1], 1, 1, 1))  
+            g = g * self.speaker_map  
+            g = torch.sum(g, dim=1)  
+            g = g.transpose(0, -1).transpose(0, -2).squeeze(0)  
         else:
             g = g.unsqueeze(0)
             g = self.emb_g(g).transpose(1, 2)
@@ -661,10 +637,10 @@ class SynthesizerTrnMsNSFsidM(nn.Module):
 
 
 class MultiPeriodDiscriminator(torch.nn.Module):
+    """ตัวแยกแยะ (Discriminator) ตรวจสอบความสมจริงของเสียงตามคาบเวลา สำหรับ V1"""
     def __init__(self, use_spectral_norm=False):
         super(MultiPeriodDiscriminator, self).__init__()
         periods = [2, 3, 5, 7, 11, 17]
-        # periods = [3, 5, 7, 11, 17, 23, 37]
 
         discs = [DiscriminatorS(use_spectral_norm=use_spectral_norm)]
         discs = discs + [
@@ -673,15 +649,10 @@ class MultiPeriodDiscriminator(torch.nn.Module):
         self.discriminators = nn.ModuleList(discs)
 
     def forward(self, y, y_hat):
-        y_d_rs = []  #
-        y_d_gs = []
-        fmap_rs = []
-        fmap_gs = []
+        y_d_rs, y_d_gs, fmap_rs, fmap_gs = [], [], [], []
         for i, d in enumerate(self.discriminators):
             y_d_r, fmap_r = d(y)
             y_d_g, fmap_g = d(y_hat)
-            # for j in range(len(fmap_r)):
-            #     print(i,j,y.shape,y_hat.shape,fmap_r[j].shape,fmap_g[j].shape)
             y_d_rs.append(y_d_r)
             y_d_gs.append(y_d_g)
             fmap_rs.append(fmap_r)
@@ -691,9 +662,9 @@ class MultiPeriodDiscriminator(torch.nn.Module):
 
 
 class MultiPeriodDiscriminatorV2(torch.nn.Module):
+    """ตัวแยกแยะ (Discriminator) ตรวจสอบความสมจริงของเสียงตามคาบเวลา สำหรับ V2"""
     def __init__(self, use_spectral_norm=False):
         super(MultiPeriodDiscriminatorV2, self).__init__()
-        # periods = [2, 3, 5, 7, 11, 17]
         periods = [2, 3, 5, 7, 11, 17, 23, 37]
 
         discs = [DiscriminatorS(use_spectral_norm=use_spectral_norm)]
@@ -703,15 +674,10 @@ class MultiPeriodDiscriminatorV2(torch.nn.Module):
         self.discriminators = nn.ModuleList(discs)
 
     def forward(self, y, y_hat):
-        y_d_rs = []  #
-        y_d_gs = []
-        fmap_rs = []
-        fmap_gs = []
+        y_d_rs, y_d_gs, fmap_rs, fmap_gs = [], [], [], []
         for i, d in enumerate(self.discriminators):
             y_d_r, fmap_r = d(y)
             y_d_g, fmap_g = d(y_hat)
-            # for j in range(len(fmap_r)):
-            #     print(i,j,y.shape,y_hat.shape,fmap_r[j].shape,fmap_g[j].shape)
             y_d_rs.append(y_d_r)
             y_d_gs.append(y_d_g)
             fmap_rs.append(fmap_r)
@@ -721,9 +687,10 @@ class MultiPeriodDiscriminatorV2(torch.nn.Module):
 
 
 class DiscriminatorS(torch.nn.Module):
+    """ตัวแยกแยะตามสเกล (Scale Discriminator)"""
     def __init__(self, use_spectral_norm=False):
         super(DiscriminatorS, self).__init__()
-        norm_f = weight_norm if use_spectral_norm == False else spectral_norm
+        norm_f = weight_norm if not use_spectral_norm else spectral_norm
         self.convs = nn.ModuleList(
             [
                 norm_f(Conv1d(1, 16, 15, 1, padding=7)),
@@ -738,7 +705,6 @@ class DiscriminatorS(torch.nn.Module):
 
     def forward(self, x):
         fmap = []
-
         for l in self.convs:
             x = l(x)
             x = F.leaky_relu(x, modules.LRELU_SLOPE)
@@ -746,16 +712,16 @@ class DiscriminatorS(torch.nn.Module):
         x = self.conv_post(x)
         fmap.append(x)
         x = torch.flatten(x, 1, -1)
-
         return x, fmap
 
 
 class DiscriminatorP(torch.nn.Module):
+    """ตัวแยกแยะตามคาบเวลา (Period Discriminator)"""
     def __init__(self, period, kernel_size=5, stride=3, use_spectral_norm=False):
         super(DiscriminatorP, self).__init__()
         self.period = period
         self.use_spectral_norm = use_spectral_norm
-        norm_f = weight_norm if use_spectral_norm == False else spectral_norm
+        norm_f = weight_norm if not use_spectral_norm else spectral_norm
         self.convs = nn.ModuleList(
             [
                 norm_f(
@@ -809,7 +775,6 @@ class DiscriminatorP(torch.nn.Module):
 
     def forward(self, x):
         fmap = []
-
         # 1d to 2d
         b, c, t = x.shape
         if t % self.period != 0:  # pad first

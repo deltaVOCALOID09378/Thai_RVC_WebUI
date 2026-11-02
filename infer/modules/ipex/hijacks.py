@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# File: hijacks.py
-# Path: infer\modules\ipex\hijacks.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.3
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# ชื่อไฟล์โค้ด (File Name)     : hijacks.py
+# เวอร์ชั่นโค้ด (Version)      : 1.3 (Intel ARC XPU Acceleration Module)
+# ตำแหน่งจัดเก็บ (Location)   : infer/modules/ipex/hijacks.py
+# หน้าที่ (Function/Role)     : ฟังก์ชัน Hook แทนที่คำสั่ง CUDA ด้วย XPU สำหรับการ์ดจอ Intel
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 import contextlib
 import importlib
 import torch
@@ -112,11 +114,11 @@ def return_xpu(device):
     return (
         f"xpu:{device[-1]}"
         if isinstance(device, str) and ":" in device
-        else f"xpu:{device}"
-        if isinstance(device, int)
-        else torch.device("xpu")
-        if isinstance(device, torch.device)
-        else "xpu"
+        else (
+            f"xpu:{device}"
+            if isinstance(device, int)
+            else torch.device("xpu") if isinstance(device, torch.device) else "xpu"
+        )
     )
 
 
@@ -279,12 +281,16 @@ def ipex_hijacks():
         "torch.batch_norm",
         lambda orig_func, input, weight, bias, *args, **kwargs: orig_func(
             input,
-            weight
-            if weight is not None
-            else torch.ones(input.size()[1], device=input.device),
-            bias
-            if bias is not None
-            else torch.zeros(input.size()[1], device=input.device),
+            (
+                weight
+                if weight is not None
+                else torch.ones(input.size()[1], device=input.device)
+            ),
+            (
+                bias
+                if bias is not None
+                else torch.zeros(input.size()[1], device=input.device)
+            ),
             *args,
             **kwargs,
         ),
@@ -294,12 +300,16 @@ def ipex_hijacks():
         "torch.instance_norm",
         lambda orig_func, input, weight, bias, *args, **kwargs: orig_func(
             input,
-            weight
-            if weight is not None
-            else torch.ones(input.size()[1], device=input.device),
-            bias
-            if bias is not None
-            else torch.zeros(input.size()[1], device=input.device),
+            (
+                weight
+                if weight is not None
+                else torch.ones(input.size()[1], device=input.device)
+            ),
+            (
+                bias
+                if bias is not None
+                else torch.zeros(input.size()[1], device=input.device)
+            ),
             *args,
             **kwargs,
         ),

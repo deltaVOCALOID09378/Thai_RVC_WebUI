@@ -1,24 +1,5 @@
-### 2026-07-23
-- Replaced the vocal and accompaniment separation backend from UVR5 with PyMSS, with support for interrupting separation during inference (a better vocal separation algorithm can significantly improve inference quality).
-- Optimized input audio loading and resampling to use GPU processing when possible, improving inference efficiency and reducing CPU usage.
-- Fixed a CUDA Graph error triggered when input or output noise reduction was enabled during real-time voice conversion.
-- Fixed libuv compatibility for training processes on Windows.
-
-### 2026-07-18
-- Reduced web UI complexity (no path required for audio inference input, improved real-time frontend logs, automatic model-list refresh after saving a small inference model, automatic detection of the matching index path after selecting a model on the inference home page, etc.).
-- Data feature extraction, model training, and index building can now be interrupted and resumed after restarting.
-- Automatically detects the GPU to determine the inference mode and precision.
-- Fixed dependency issues (including issues with pyworld, fairseq, matplotlib, PyAV, and ONNX Runtime GPU environments).
-- Resolved encoding issues.
-- The web UI now automatically searches for an available port at startup.
-- Single-GPU training no longer uses DDP.
-- The base model remains unchanged. Several issues affecting output quality have been fixed. Updating the bundled package/code and rerunning inference with an existing fine-tuned model, or retraining and then running inference with the new version, may improve results.
-- Added support for the FCPE pitch extraction algorithm.
-- The real-time voice conversion GUI supports CUDA Graph inference acceleration, achieving up to a 4.7× speedup in algorithm inference latency (tested on an RTX 4090D), while GPU utilization remains around 20–30%.
-- Removed features that were clearly obsolete or no longer useful.
-
 ### 2023-10-06
-- We have created a GUI for real-time voice change: go-realtime_gui.bat/realtime_gui.py (Note that you should choose the same type of input and output device, e.g. MME and MME).
+- We have created a GUI for real-time voice change: go-realtime-gui.bat/gui_v1.py (Note that you should choose the same type of input and output device, e.g. MME and MME).
 - We trained a better pitch extract RMVPE model.
 - Optimize inference GUI layout.
 
@@ -100,7 +81,7 @@ History changelogs:
 - Fixed issue with silent input/output producing random consonants or noise (old models need to retrain with a new dataset)
 
 ### 2023-04-16 Update
-- Added local real-time voice changing mini-GUI, start by double-clicking go-realtime_gui.bat
+- Added local real-time voice changing mini-GUI, start by double-clicking go-realtime-gui.bat
 - Applied filtering for frequency bands below 50Hz during training and inference
 - Lowered the minimum pitch extraction of pyworld from the default 80 to 50 for training and inference, allowing male low-pitched voices between 50-80Hz not to be muted
 - WebUI supports changing languages according to system locale (currently supporting en_US, ja_JP, zh_CN, zh_HK, zh_SG, zh_TW; defaults to en_US if not supported)

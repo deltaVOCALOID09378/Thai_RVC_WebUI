@@ -1,10 +1,11 @@
 # ==============================================================================
-# File: PMF0Predictor.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\infer_pack\modules\F0Predictor\PMF0Predictor.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# 1. วัน/เดือน/ปี (Date)       : 30/10/2569 (30 October 2026)
+# 2. ชื่อไฟล์ที่ทำ (File Name)   : PMF0Predictor.py
+# 3. ลำดับเวอร์ชั่นของไฟล์ (Version): 1.2
+# 4. เครดิตผู้สร้าง (Credit)    : Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+#                              [ Original by "RVC-Project" ]
+# 5. ตำแหน่งที่วางของไฟล์ (Path) : infer/lib/infer_pack/modules/F0Predictor/PMF0Predictor.py
+# 6. รายละเอียดการแก้ไขงาน    : ปรับสมดุลโค้ดและแก้ไขตรรกะการ Padding ให้ปลอดภัยและเสถียรยิ่งขึ้น
 # ==============================================================================
 import numpy as np
 import parselmouth
@@ -23,14 +24,13 @@ class PMF0Predictor(F0Predictor):
         """
         Perform F0 interpolation
         """
-
         data = np.reshape(f0, (f0.size, 1))
 
         vuv_vector = np.zeros((data.size, 1), dtype=np.float32)
         vuv_vector[data > 0.0] = 1.0
         vuv_vector[data <= 0.0] = 0.0
 
-        ip_data = data
+        ip_data = data.copy()
 
         frame_number = data.size
         last_value = 0.0
@@ -52,7 +52,7 @@ class PMF0Predictor(F0Predictor):
                     for k in range(i, frame_number):
                         ip_data[k] = last_value
             else:
-                ip_data[i] = data[i]  # avoid unnecessary copy
+                ip_data[i] = data[i]
                 last_value = data[i]
 
         return ip_data[:, 0], vuv_vector[:, 0]
@@ -63,6 +63,7 @@ class PMF0Predictor(F0Predictor):
             p_len = x.shape[0] // self.hop_length
         else:
             assert abs(p_len - x.shape[0] // self.hop_length) < 4, "pad length error"
+            
         time_step = self.hop_length / self.sampling_rate * 1000
         f0 = (
             parselmouth.Sound(x, self.sampling_rate)
@@ -76,8 +77,9 @@ class PMF0Predictor(F0Predictor):
         )
 
         pad_size = (p_len - len(f0) + 1) // 2
-        if pad_size > 0 or p_len - len(f0) - pad_size > 0:
-            f0 = np.pad(f0, [[pad_size, p_len - len(f0) - pad_size]], mode="constant")
+        if pad_size > 0 or (p_len - len(f0) - pad_size) > 0:
+            f0 = np.pad(f0, [[max(0, pad_size), max(0, p_len - len(f0) - pad_size)]], mode="constant")
+            
         f0, uv = self.interpolate_f0(f0)
         return f0
 
@@ -87,6 +89,7 @@ class PMF0Predictor(F0Predictor):
             p_len = x.shape[0] // self.hop_length
         else:
             assert abs(p_len - x.shape[0] // self.hop_length) < 4, "pad length error"
+            
         time_step = self.hop_length / self.sampling_rate * 1000
         f0 = (
             parselmouth.Sound(x, self.sampling_rate)
@@ -100,7 +103,8 @@ class PMF0Predictor(F0Predictor):
         )
 
         pad_size = (p_len - len(f0) + 1) // 2
-        if pad_size > 0 or p_len - len(f0) - pad_size > 0:
-            f0 = np.pad(f0, [[pad_size, p_len - len(f0) - pad_size]], mode="constant")
+        if pad_size > 0 or (p_len - len(f0) - pad_size) > 0:
+            f0 = np.pad(f0, [[max(0, pad_size), max(0, p_len - len(f0) - pad_size)]], mode="constant")
+            
         f0, uv = self.interpolate_f0(f0)
         return f0, uv

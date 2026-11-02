@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: common_separator.py
+# Path: tools\pymss\modules\vocal_remover\common_separator.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 class CommonSeparator:
     VOCAL_STEM = "Vocals"
     OTHER_STEM = "Other"

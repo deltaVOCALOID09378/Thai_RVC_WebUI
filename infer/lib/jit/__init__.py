@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# File: __init__.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\jit\__init__.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# ชื่อไฟล์โค้ด (File Name)     : __init__.py
+# เวอร์ชั่นโค้ด (Version)      : 1.3 (VRAM Spike Guard & PyTorch 2.6+ Safe Load)
+# ตำแหน่งจัดเก็บ (Location)   : infer/lib/jit/__init__.py
+# หน้าที่ (Function/Role)     : จัดการการคอมไพล์และแปลงโมเดลด้วย PyTorch JIT
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 from io import BytesIO
 import pickle
 import time

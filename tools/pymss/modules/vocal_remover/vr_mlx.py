@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: vr_mlx.py
+# Path: tools\pymss\modules\vocal_remover\vr_mlx.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import torch
 
 from ..bs_roformer.mlx_attention import _linear, _mlx_dtype, _torch_to_mlx_array

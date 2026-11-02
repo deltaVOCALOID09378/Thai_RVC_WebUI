@@ -1,6 +1,6 @@
 # RVC Realtime VST Developer Guide
 
-[English](./README.en.md) | [简体中文](./README.md)
+[English](./README.en.md) | [简体中文](./README.md) | [ภาษาไทย](./README.th.md)
 
 RVC Realtime VST is a Windows x64 real-time voice conversion plug-in project. The same source tree builds both VST2 and VST3 formats.
 

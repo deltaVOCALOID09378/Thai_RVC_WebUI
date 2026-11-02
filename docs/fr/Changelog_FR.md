@@ -1,22 +1,3 @@
-### 2026-07-23
-- Remplacement du moteur de séparation des voix et de l’accompagnement UVR5 par PyMSS, avec possibilité d’interrompre la séparation pendant l’inférence (un meilleur algorithme de séparation vocale peut améliorer considérablement la qualité de l’inférence).
-- Optimisation du chargement et du rééchantillonnage de l’audio d’entrée afin d’utiliser le GPU lorsque cela est possible, pour améliorer l’efficacité de l’inférence et réduire l’utilisation du processeur.
-- Correction d’une erreur CUDA Graph déclenchée lorsque la réduction du bruit d’entrée ou de sortie était activée pendant la conversion vocale en temps réel.
-- Correction d’un problème de compatibilité avec libuv pour les processus d’entraînement sous Windows.
-
-### 2026-07-18
-- Utilisation simplifiée de l’interface Web (il n’est plus nécessaire de saisir un chemin pour l’audio d’entrée de l’inférence, amélioration des journaux en temps réel dans l’interface, actualisation automatique de la liste des modèles après l’enregistrement d’un petit modèle d’inférence, détection automatique du chemin d’index correspondant après la sélection d’un modèle sur la page d’accueil de l’inférence, etc.).
-- L’extraction des caractéristiques des données, l’entraînement des modèles et la création des index peuvent désormais être interrompus en cours d’exécution, puis repris après un redémarrage.
-- Détection automatique du GPU afin de déterminer le mode d’inférence et la précision.
-- Correction de problèmes de dépendances (notamment ceux concernant pyworld, fairseq, matplotlib, PyAV et les environnements GPU d’ONNX Runtime).
-- Résolution des problèmes d’encodage.
-- L’interface Web recherche désormais automatiquement un port disponible au démarrage.
-- L’entraînement sur un seul GPU n’utilise plus DDP.
-- Le modèle de base reste inchangé. Plusieurs problèmes affectant la qualité des résultats ont été corrigés. La mise à jour du package intégré/du code, puis la relance de l’inférence avec un modèle affiné existant, ou le réentraînement avec la nouvelle version avant de relancer l’inférence, peuvent améliorer les résultats.
-- Ajout de la prise en charge de l’algorithme d’extraction de hauteur FCPE.
-- L’interface graphique de conversion vocale en temps réel prend en charge l’accélération de l’inférence par CUDA Graph, avec une accélération maximale de 4.7× de la latence d’inférence de l’algorithme (résultat mesuré sur une RTX 4090D), tandis que l’utilisation du GPU reste d’environ 20–30%.
-- Suppression des fonctionnalités manifestement obsolètes ou devenues inutiles.
-
 ### 2023-08-13
 1-Corrections régulières de bugs
 - Modification du nombre total d'époques minimum à 1 et changement du nombre total d'époques minimum à 2
@@ -95,7 +76,7 @@ Historique des changelogs:
 - Correction du problème d'entrée/sortie silencieuse produisant des consonnes aléatoires ou du bruit (les anciens modèles doivent être réentraînés avec un nouveau jeu de données)
 
 ### 2023-04-16 Mise à jour
-- Ajout d'une mini-interface graphique pour le changement de voix en temps réel, démarrage par double-clic sur go-realtime_gui.bat
+- Ajout d'une mini-interface graphique pour le changement de voix en temps réel, démarrage par double-clic sur go-realtime-gui.bat
 - Application d'un filtrage pour les bandes de fréquences inférieures à 50Hz pendant l'entraînement et l'inférence
 - Abaissement de l'extraction de hauteur minimale de pyworld du défaut 80 à 50 pour l'entraînement et l'inférence, permettant aux voix masculines graves entre 50-80Hz de ne pas être mises en sourdine
 - WebUI prend en charge le changement de langue en fonction des paramètres régionaux du système (prise en charge actuelle de en_US, ja_JP, zh_CN, zh_HK, zh_SG, zh_TW ; défaut à en_US si non pris en charge)

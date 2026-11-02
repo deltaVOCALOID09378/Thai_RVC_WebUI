@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: apollo_mlx.py
+# Path: tools\pymss_core\modules\apollo_mlx.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import torch
 
 from .bs_roformer.mlx_attention import _mlx_dtype, _torch_to_mlx_array, mlx_to_torch_mps

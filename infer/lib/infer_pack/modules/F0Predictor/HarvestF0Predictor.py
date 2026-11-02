@@ -1,10 +1,11 @@
 # ==============================================================================
-# File: HarvestF0Predictor.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\infer_pack\modules\F0Predictor\HarvestF0Predictor.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# 1. วัน/เดือน/ปี (Date)       : 30/10/2569 (30 October 2026)
+# 2. ชื่อไฟล์ที่ทำ (File Name)   : HarvestF0Predictor.py
+# 3. ลำดับเวอร์ชั่นของไฟล์ (Version): 1.2
+# 4. เครดิตผู้สร้าง (Credit)    : Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+#                              [ Original by "RVC-Project" ]
+# 5. ตำแหน่งที่วางของไฟล์ (Path) : infer/lib/infer_pack/modules/F0Predictor/HarvestF0Predictor.py
+# 6. รายละเอียดการแก้ไขงาน    : แก้ไขบั๊กร้ายแรงตัวแปร self.fs ที่ไม่มีอยู่จริง และแก้พารามิเตอร์ fs ของ pyworld ให้ถูกต้อง
 # ==============================================================================
 import numpy as np
 import pyworld
@@ -23,14 +24,13 @@ class HarvestF0Predictor(F0Predictor):
         """
         Perform F0 interpolation
         """
-
         data = np.reshape(f0, (f0.size, 1))
 
         vuv_vector = np.zeros((data.size, 1), dtype=np.float32)
         vuv_vector[data > 0.0] = 1.0
         vuv_vector[data <= 0.0] = 0.0
 
-        ip_data = data
+        ip_data = data.copy()
 
         frame_number = data.size
         last_value = 0.0
@@ -52,13 +52,13 @@ class HarvestF0Predictor(F0Predictor):
                     for k in range(i, frame_number):
                         ip_data[k] = last_value
             else:
-                ip_data[i] = data[i]  # avoid unnecessary copy
+                ip_data[i] = data[i]
                 last_value = data[i]
 
         return ip_data[:, 0], vuv_vector[:, 0]
 
     def resize_f0(self, x, target_len):
-        source = np.array(x)
+        source = np.array(x, dtype=np.float64)
         source[source < 0.001] = np.nan
         target = np.interp(
             np.arange(0, len(source) * target_len, len(source)) / target_len,
@@ -73,12 +73,13 @@ class HarvestF0Predictor(F0Predictor):
             p_len = wav.shape[0] // self.hop_length
         f0, t = pyworld.harvest(
             wav.astype(np.double),
-            fs=self.hop_length,
+            fs=self.sampling_rate,  # FIXED: เปลี่ยนจาก self.hop_length เป็น self.sampling_rate
             f0_ceil=self.f0_max,
             f0_floor=self.f0_min,
             frame_period=1000 * self.hop_length / self.sampling_rate,
         )
-        f0 = pyworld.stonemask(wav.astype(np.double), f0, t, self.fs)
+        # FIXED: เปลี่ยนจาก self.fs เป็น self.sampling_rate
+        f0 = pyworld.stonemask(wav.astype(np.double), f0, t, self.sampling_rate)
         return self.interpolate_f0(self.resize_f0(f0, p_len))[0]
 
     def compute_f0_uv(self, wav, p_len=None):
@@ -91,5 +92,6 @@ class HarvestF0Predictor(F0Predictor):
             f0_ceil=self.f0_max,
             frame_period=1000 * self.hop_length / self.sampling_rate,
         )
+        # FIXED: ตรวจสอบและบังคับใช้ self.sampling_rate
         f0 = pyworld.stonemask(wav.astype(np.double), f0, t, self.sampling_rate)
         return self.interpolate_f0(self.resize_f0(f0, p_len))

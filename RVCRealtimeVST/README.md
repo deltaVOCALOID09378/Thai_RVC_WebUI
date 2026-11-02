@@ -1,6 +1,6 @@
 # RVC Realtime VST 开发说明
 
-[简体中文](./README.md) | [English](./README.en.md)
+[简体中文](./README.md) | [English](./README.en.md) | [ภาษาไทย](./README.th.md)
 
 RVC Realtime VST 是面向 Windows x64 的实时变声插件工程，可从同一套源码构建 VST2 和 VST3。
 

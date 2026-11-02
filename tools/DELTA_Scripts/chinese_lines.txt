@@ -1,0 +1,2 @@
+Line 54: return "模型信息:%s\n采样率:%s\n模型是否输入音高引导:%s\n版本:%s" % (
+Line 255: opt["f0"] = 1 if f0 == i18n("是") else 0

@@ -1,0 +1,46 @@
+1: # Original by RVC Project & DiffSinger Developers
+409: ║   Comprehensive Gradio-based DiffSinger Voice Bank Trainer   ║
+440: if str(ROOT_DIR) not in sys.path:
+456: max-width: 1400px !important;
+572: return datetime.now().strftime("%H:%M:%S")
+719: info_lines.append(f"📌 RAM: {ram_gb:.1f} GB total / {ram.available / (1024**3):.1f} GB available")
+731: info_lines.append(f"📌 PyTorch: {torch.__version__}")
+744: info_lines.append("❌ PyTorch: Not installed!")
+878: """Create a new DiffSinger project with folder structure."""
+920: msg += f"\n   Path: {project_dir}"
+1114: if '/' in ph:
+1655: mtime = datetime.fromtimestamp(ckpt.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+1656: lines.append(f"   📌 Step {step:>8}  |  {size_mb:>7.1f} MB  |  {mtime}")
+1675: #  TAB 6: EXPORT & PACKAGE FOR OPENUTAU
+1744: def package_for_openutau(project_name, exp_name, voicebank_name, author,
+1746: """Package exported files into OpenUtau-compatible voice bank."""
+1754: log_lines = [log_msg("เริ่มสร้างชุดคลังเสียง OpenUtau...", "RUN")]
+1764: author = author or "DiffSinger Trainer UI"
+1767: # Create character.yaml for OpenUtau
+1773: character['description'] = description or f"DiffSinger voice bank: {voicebank_name}"
+1775: character['singer_type'] = 'diffsinger'
+1813: log_lines.append(f"   📦 {of.name} ({size_mb:.1f} MB)")
+1822: zip_name = f"{voicebank_name.replace(' ', '_')}_OpenUtau"
+1834: log_lines.append("   ✨ พร้อมใช้งานใน OpenUtau!")
+1835: log_lines.append("   วิธีใช้: คัดลอกโฟลเดอร์ export/ ไปยังโฟลเดอร์ Singers ของ OpenUtau")
+1852: max-width: 1400px !important;
+1981: with gr.Blocks(theme=delta_synth_theme, css=DELTA_SYNTH_CSS, title="The Thai RVC and Diffsinger WebUI by DELTA SYNTH") as app:
+2001: input_audio0 = gr.Textbox(label="เส้นทางไฟล์เสียงต้นฉบับ (Source Audio Path)", placeholder=r"B:\Export to UTAU\Test2.wav", value=r"B:\Export to UTAU\Test2.wav")
+2030: opt_input = gr.Textbox(label="ไดเรกทอรีส่งออก (Output Directory)", value=r"B:\Render file to UTAU\[ชื่อโมเดล]\[ภาษา]")
+2045: dir_input = gr.Textbox(label="เส้นทางโฟลเดอร์ต้นฉบับ (Source Directory Path)", value=r"B:\Export to UTAU\EN", placeholder=r"B:\Export to UTAU\EN")
+2086: trainset_dir4 = gr.Textbox(label="โฟลเดอร์ชุดข้อมูล (Dataset Directory)", value=r"B:\DiffSinger_Training")
+2202: with gr.TabItem("🖥️ DiffSinger: System Info"):
+2226: with gr.TabItem("📂 DiffSinger: Data Manager"):
+2409: with gr.TabItem("⚙️ DiffSinger: Config Generator"):
+2495: with gr.TabItem("🔄 DiffSinger: Preprocessing"):
+2547: with gr.TabItem("🚀 DiffSinger: Training"):
+2548: gr.Markdown("### เทรนโมเดล DiffSinger")
+2669: with gr.TabItem("📦 DiffSinger: Export & Package"):
+2670: gr.Markdown("### ส่งออก ONNX & สร้างชุดคลังเสียง OpenUtau")
+2723: with gr.Accordion("🎤 Voice Bank Info (สำหรับ OpenUtau)", open=True):
+2724: gr.Markdown("*ระบุรายละเอียดคลังเสียง สำหรับแสดงใน OpenUtau*")
+2728: placeholder="My DiffSinger Voice",
+2749: placeholder="คลังเสียง DiffSinger AI สำหรับ OpenUtau",
+2754: "📦 สร้างชุดคลังเสียง OpenUtau (Package)",
+2794: fn=package_for_openutau,
+2810: if config.iscolab:

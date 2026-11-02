@@ -1,7 +1,7 @@
 # ==============================================================================
 # Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
 # Original by Patiphat Wongyai (Delta) & RVC Project
-# File: configs/config.py | Version: 1.6
+# File: configs/config.py | Version: 1.7 (Zero-Defect Config Fallback & Single-Pass FP32 Init)
 # Location: configs/config.py
 # Description: Hardware and Runtime Environment Configuration Manager
 # ==============================================================================
@@ -26,7 +26,7 @@ except Exception:
 
 version_config_list = [
     "v1/32k.json", "v1/40k.json", "v1/48k.json",
-    "v2/48k.json", "v2/32k.json",
+    "v2/32k.json", "v2/40k.json", "v2/48k.json",
 ]
 
 
@@ -109,8 +109,9 @@ class Config:
             p = f"configs/inuse/{config_file}"
             if not os.path.exists(p):
                 os.makedirs(os.path.dirname(p), exist_ok=True)
-                if os.path.exists(f"configs/{config_file}"):
-                    shutil.copy(f"configs/{config_file}", p)
+                src_cfg = f"configs/{config_file}" if os.path.exists(f"configs/{config_file}") else ("configs/v1/40k.json" if config_file == "v2/40k.json" else "")
+                if src_cfg and os.path.exists(src_cfg):
+                    shutil.copy(src_cfg, p)
             if os.path.exists(p):
                 with open(p, "r", encoding="utf-8") as f:
                     d[config_file] = json.load(f)
@@ -164,7 +165,6 @@ class Config:
         fallback_device = "cpu"
         self.device = fallback_device
         self.is_half = False
-        self.use_fp32_config()
         self.gpu_name = "CPU Core (Default)"
 
         try:
@@ -182,6 +182,7 @@ class Config:
                 if not import_dml_success:
                     self.device = "cpu"
                     self.is_half = False
+                self.use_fp32_config()
             elif torch.cuda.is_available():
                 if self.has_xpu():
                     self.device = self.instead = "xpu:0"

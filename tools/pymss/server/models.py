@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: models.py
+# Path: tools\pymss\server\models.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 from __future__ import annotations
 
 from ..model_download import remote_url

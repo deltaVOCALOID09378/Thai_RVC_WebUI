@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: _dsp.py
+# Path: tools\pymss_core\modules\_dsp.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 """Small DSP helpers needed by model definitions."""
 
 from __future__ import annotations

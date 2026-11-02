@@ -1,3 +1,12 @@
+// ==============================================================================
+// File Name: RVCRealtime.cpp
+// Version: 0.2.0
+// Target Path: Thai_RVC_WebUI_v1\RVCRealtimeVST\src\RVCRealtime.cpp
+// Role: VST2/VST3 Main DSP and Bilingual UI Implementation / โค้ดหลักส่วนประมวลผลเสียงและส่วนติดต่อผู้ใช้งานสองภาษาของปลั๊กอิน VST
+// Credits: Made And Checked By DELTA SYNTH & All Agentic AI
+// Original by RVC-Project & Patiphat Wongyai (Delta)
+// ==============================================================================
+
 #include "RVCRealtime.h"
 #include "IPlug_include_in_plug_src.h"
 #include "IPlugPaths.h"
@@ -15,13 +24,16 @@
 
 namespace {
 
-const IColor kBackground = IColor(255, 18, 20, 23);
-const IColor kPanel = IColor(255, 33, 36, 39);
-const IColor kHeaderColor = IColor(255, 235, 234, 228);
-const IColor kText = IColor(255, 233, 232, 226);
-const IColor kMuted = IColor(255, 152, 155, 155);
-const IColor kAccent = IColor(255, 41, 151, 126);
-const IColor kAmber = IColor(255, 230, 160, 48);
+// มาตรฐานสีองค์กร DELTA SYNTH (#1A1A1A พื้นหลัง, #CC2200 สีแดงเน้นย้ำ, #F0F0F0 ข้อความ)
+const IColor kBackground = IColor(255, 26, 26, 26);       // #1A1A1A
+const IColor kPanel = IColor(255, 38, 38, 38);            // #262626
+const IColor kHeaderColor = IColor(255, 20, 20, 20);      // #141414
+const IColor kText = IColor(255, 240, 240, 240);          // #F0F0F0
+const IColor kMuted = IColor(255, 176, 176, 176);         // #B0B0B0
+const IColor kAccent = IColor(255, 204, 34, 0);           // #CC2200
+const IColor kAmber = IColor(255, 255, 68, 34);           // #FF4422
+
+constexpr const char* kPrimaryFont = "Leelawadee UI";
 
 enum class PathRow { RvcRoot, Python, Model, Index };
 
@@ -93,7 +105,7 @@ bool Is64BitExecutable(const std::string& path)
 {
   DWORD binaryType = 0;
   return GetBinaryTypeW(UTF8AsUTF16(path.c_str()).Get(), &binaryType) != FALSE
-      && binaryType == SCS_64BIT_BINARY;
+    && binaryType == SCS_64BIT_BINARY;
 }
 
 IVStyle MakeStyle()
@@ -102,9 +114,9 @@ IVStyle MakeStyle()
     .WithColor(kBG, kPanel)
     .WithColor(kFG, kAccent)
     .WithColor(kPR, kText)
-    .WithColor(kFR, IColor(255, 64, 68, 72))
-    .WithLabelText(IText(13.f, kMuted, "Roboto-Regular", EAlign::Center))
-    .WithValueText(IText(14.f, kText, "Roboto-Regular", EAlign::Center))
+    .WithColor(kFR, IColor(255, 204, 34, 0))
+    .WithLabelText(IText(13.f, kMuted, kPrimaryFont, EAlign::Center))
+    .WithValueText(IText(14.f, kText, kPrimaryFont, EAlign::Center))
     .WithRoundness(0.15f)
     .WithWidgetFrac(0.55f)
     .WithDrawShadows(false)
@@ -131,31 +143,31 @@ public:
 const char* StatusName(const int status)
 {
   switch (status) {
-    case rvc::kStatusStarting: return "STARTING";
-    case rvc::kStatusLoading: return "LOADING MODEL";
-    case rvc::kStatusReady: return "READY";
-    case rvc::kStatusError: return "ERROR";
-    default: return "ENGINE OFF";
+  case rvc::kStatusStarting: return "STARTING / กำลังเริ่ม";
+  case rvc::kStatusLoading: return "LOADING / กำลังโหลด";
+  case rvc::kStatusReady: return "READY / พร้อมทำงาน";
+  case rvc::kStatusError: return "ERROR / ข้อผิดพลาด";
+  default: return "ENGINE OFF / ปิดระบบ";
   }
 }
 
 } // namespace
 
 RVCRealtime::RVCRealtime(const InstanceInfo& info)
-: Plugin(info, MakeConfig(kNumParams, kNumPresets))
+  : Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
-  GetParam(kEngine)->InitBool("Engine", false);
-  GetParam(kPitch)->InitInt("Pitch", 12, -24, 24, "st");
-  GetParam(kFormant)->InitDouble("Formant", 0.0, -12.0, 12.0, 0.01, "st");
-  GetParam(kIndexRate)->InitDouble("Index", 0.0, 0.0, 1.0, 0.001);
-  GetParam(kRmsMix)->InitDouble("RMS Mix", 0.5, 0.0, 1.0, 0.001);
-  GetParam(kThreshold)->InitDouble("Gate", -60.0, -60.0, 0.0, 0.1, "dB");
-  GetParam(kBlockMs)->InitInt("Block", 130, 20, 1000, "ms");
-  GetParam(kCrossfadeMs)->InitInt("Crossfade", 80, 10, 100, "ms");
-  GetParam(kExtraMs)->InitInt("Context", 2000, 500, 3000, "ms");
-  GetParam(kF0Method)->InitEnum("F0 Method", 0, {"RMVPE", "FCPE", "PM"});
-  GetParam(kDryWet)->InitDouble("Mix", 100.0, 0.0, 100.0, 0.1, "%");
-  GetParam(kOutputGain)->InitDouble("Output", 0.0, -18.0, 12.0, 0.1, "dB");
+  GetParam(kEngine)->InitBool("Engine / ระบบประมวลผล", false);
+  GetParam(kPitch)->InitInt("Pitch / ระดับเสียง", 12, -24, 24, "st");
+  GetParam(kFormant)->InitDouble("Formant / ฟอร์แมนต์", 0.0, -12.0, 12.0, 0.01, "st");
+  GetParam(kIndexRate)->InitDouble("Index / อัตราดัชนี", 0.0, 0.0, 1.0, 0.001);
+  GetParam(kRmsMix)->InitDouble("RMS Mix / ผสมความดัง", 0.5, 0.0, 1.0, 0.001);
+  GetParam(kThreshold)->InitDouble("Gate / เกตตัดเสียงรบกวน", -60.0, -60.0, 0.0, 0.1, "dB");
+  GetParam(kBlockMs)->InitInt("Block / ขนาดบล็อก", 130, 20, 1000, "ms");
+  GetParam(kCrossfadeMs)->InitInt("Crossfade / ครอสเฟด", 80, 10, 100, "ms");
+  GetParam(kExtraMs)->InitInt("Context / บริบทเสียง", 2000, 500, 3000, "ms");
+  GetParam(kF0Method)->InitEnum("F0 Method / อัลกอริทึม F0", 0, {"RMVPE", "FCPE", "PM"});
+  GetParam(kDryWet)->InitDouble("Mix / สัดส่วนเสียง", 100.0, 0.0, 100.0, 0.1, "%");
+  GetParam(kOutputGain)->InitDouble("Output / ความดังเอาต์พุต", 0.0, -18.0, 12.0, 0.1, "dB");
 
   LoadUserConfiguration();
   if (mPythonPath.GetLength() == 0 && mRvcRoot.GetLength() > 0) {
@@ -177,67 +189,69 @@ RVCRealtime::RVCRealtime(const InstanceInfo& info)
 #if IPLUG_EDITOR
   mMakeGraphicsFunc = [&]() {
     return MakeGraphics(*this, PLUG_WIDTH, PLUG_HEIGHT, PLUG_FPS,
-                        GetScaleForScreen(PLUG_WIDTH, PLUG_HEIGHT));
+      GetScaleForScreen(PLUG_WIDTH, PLUG_HEIGHT));
   };
 
   mLayoutFunc = [&](IGraphics* graphics) {
     graphics->EnableMouseOver(true);
-    graphics->AttachCornerResizer(EUIResizerMode::Scale, false); // drag corner to scale whole UI
+    graphics->AttachCornerResizer(EUIResizerMode::Scale, false);
     graphics->AttachPanelBackground(kBackground);
-    graphics->LoadFont("Roboto-Regular", ROBOTO_FN);
+    if (!graphics->LoadFont(kPrimaryFont, "C:\\Windows\\Fonts\\LeelawUI.ttf")) {
+      graphics->LoadFont(kPrimaryFont, ROBOTO_FN);
+    }
     const IVStyle style = MakeStyle();
     const IRECT bounds = graphics->GetBounds();
 
     // Header
     graphics->AttachControl(new IPanelControl(bounds.GetFromTop(86.f), kHeaderColor));
-    graphics->AttachControl(new ITextControl(IRECT(28, 10, 420, 52), "RVC REALTIME",
-                                              IText(28.f, IColor(255, 23, 25, 27), "Roboto-Regular", EAlign::Near)));
-    graphics->AttachControl(new ITextControl(IRECT(30, 50, 420, 76), "VOICE CONVERSION / CUDA BRIDGE",
-                                              IText(12.f, IColor(255, 85, 89, 90), "Roboto-Regular", EAlign::Near)));
-    graphics->AttachControl(new ITextControl(IRECT(560, 16, 750, 42), "ENGINE OFF",
-                                              IText(14.f, IColor(255, 80, 84, 86), "Roboto-Regular", EAlign::Far)), kCtrlStatus);
-    graphics->AttachControl(new ITextControl(IRECT(560, 42, 750, 66), "0 ms / 0 drop",
-                                              IText(12.f, IColor(255, 100, 104, 105), "Roboto-Regular", EAlign::Far)), kCtrlPerformance);
+    graphics->AttachControl(new ITextControl(IRECT(28.f, 10.f, 520.f, 52.f), "DELTA SYNTH - RVC & DIFFSINGER",
+      IText(24.f, kText, kPrimaryFont, EAlign::Near)));
+    graphics->AttachControl(new ITextControl(IRECT(30.f, 50.f, 520.f, 76.f), "REALTIME AI VOICE CONVERSION / ระบบแปลงเสียงเรียลไทม์",
+      IText(12.f, kAccent, kPrimaryFont, EAlign::Near)));
+    graphics->AttachControl(new ITextControl(IRECT(520.f, 16.f, 750.f, 42.f), "ENGINE OFF / ปิดระบบ",
+      IText(14.f, kText, kPrimaryFont, EAlign::Far)), kCtrlStatus);
+    graphics->AttachControl(new ITextControl(IRECT(520.f, 42.f, 750.f, 66.f), "0 ms / 0 drop",
+      IText(12.f, kMuted, kPrimaryFont, EAlign::Far)), kCtrlPerformance);
 
     // Runtime and model paths
     auto attachFileRow = [&](const float y, const char* label, const int textTag, const PathRow pathRow) {
       const float rowHeight = 36.f;
-      graphics->AttachControl(new ITextControl(IRECT(30, y, 92, y + rowHeight), label,
-                                                IText(13.f, kMuted, "Roboto-Regular", EAlign::Near)));
-      graphics->AttachControl(new IPanelControl(IRECT(96, y, 692, y + rowHeight), kPanel));
+      graphics->AttachControl(new ITextControl(IRECT(24.f, y, 118.f, y + rowHeight), label,
+        IText(12.f, kMuted, kPrimaryFont, EAlign::Near)));
+      graphics->AttachControl(new IPanelControl(IRECT(122.f, y, 692.f, y + rowHeight), kPanel));
       const char* initial = "";
       switch (pathRow) {
-        case PathRow::RvcRoot: initial = mRvcRoot.Get(); break;
-        case PathRow::Python: initial = mPythonPath.Get(); break;
-        case PathRow::Model: initial = mModelPath.get_filepart(); break;
-        case PathRow::Index: initial = mIndexPath.get_filepart(); break;
+      case PathRow::RvcRoot: initial = mRvcRoot.Get(); break;
+      case PathRow::Python: initial = mPythonPath.Get(); break;
+      case PathRow::Model: initial = mModelPath.get_filepart(); break;
+      case PathRow::Index: initial = mIndexPath.get_filepart(); break;
       }
-      graphics->AttachControl(new ITextControl(IRECT(110, y, 680, y + rowHeight), initial,
-                                                IText(12.f, kText, "Roboto-Regular", EAlign::Near)), textTag);
+      graphics->AttachControl(new ITextControl(IRECT(132.f, y, 680.f, y + rowHeight), initial,
+        IText(12.f, kText, kPrimaryFont, EAlign::Near)), textTag);
       auto action = [this, graphics, pathRow](IControl*) {
         switch (pathRow) {
-          case PathRow::RvcRoot: ChooseRvcRoot(graphics); break;
-          case PathRow::Python: ChoosePython(graphics); break;
-          case PathRow::Model: ChooseModel(graphics); break;
-          case PathRow::Index: ChooseIndex(graphics); break;
+        case PathRow::RvcRoot: ChooseRvcRoot(graphics); break;
+        case PathRow::Python: ChoosePython(graphics); break;
+        case PathRow::Model: ChooseModel(graphics); break;
+        case PathRow::Index: ChooseIndex(graphics); break;
         }
       };
-      graphics->AttachControl(new IVButtonControl(IRECT(700, y, 750, y + rowHeight), action, "...",
-                                                  style.WithLabelText(IText(18.f, kText, "Roboto-Regular", EAlign::Center)), true));
+      graphics->AttachControl(new IVButtonControl(IRECT(700.f, y, 750.f, y + rowHeight), action, "...",
+        style.WithLabelText(IText(18.f, kText, kPrimaryFont, EAlign::Center)), true));
     };
-    attachFileRow(100.f, "RVC ROOT", kCtrlRvcRoot, PathRow::RvcRoot);
-    attachFileRow(142.f, "PYTHON", kCtrlPythonPath, PathRow::Python);
-    attachFileRow(184.f, "MODEL", kCtrlModelName, PathRow::Model);
-    attachFileRow(226.f, "INDEX", kCtrlIndexName, PathRow::Index);
-    graphics->AttachControl(new ITextControl(IRECT(96, 266, 750, 290), "Select RVC root and Python runtime",
-                                              IText(12.f, kAmber, "Roboto-Regular", EAlign::Near)), kCtrlStatusDetail);
+    attachFileRow(100.f, "RVC ROOT / โฟลเดอร์", kCtrlRvcRoot, PathRow::RvcRoot);
+    attachFileRow(142.f, "PYTHON / ไพธอน", kCtrlPythonPath, PathRow::Python);
+    attachFileRow(184.f, "MODEL / โมเดล", kCtrlModelName, PathRow::Model);
+    attachFileRow(226.f, "INDEX / ดัชนี", kCtrlIndexName, PathRow::Index);
+    graphics->AttachControl(new ITextControl(IRECT(122.f, 266.f, 750.f, 290.f), "Select RVC root and runtime\\python.exe / เลือกโฟลเดอร์หลักและไพธอน",
+      IText(12.f, kAmber, kPrimaryFont, EAlign::Near)), kCtrlStatusDetail);
 
     // 3x3 slider grid
     struct SliderLayout { int param; const char* label; };
     const SliderLayout sliders[] = {
-      {kPitch, "PITCH"}, {kFormant, "FORMANT"}, {kIndexRate, "INDEX"},
-      {kRmsMix, "RMS MIX"}, {kThreshold, "GATE"}, {kDryWet, "MIX"},
-      {kBlockMs, "BLOCK"}, {kCrossfadeMs, "CROSSFADE"}, {kExtraMs, "CONTEXT"}
+      {kPitch, "PITCH / ระดับเสียง"}, {kFormant, "FORMANT / ฟอร์แมนต์"}, {kIndexRate, "INDEX / ดัชนี"},
+      {kRmsMix, "RMS MIX / ความดัง"}, {kThreshold, "GATE / ตัดเสียงรบกวน"}, {kDryWet, "MIX / ผสมเสียง"},
+      {kBlockMs, "BLOCK / บล็อก"}, {kCrossfadeMs, "CROSSFADE / เฟด"}, {kExtraMs, "CONTEXT / บริบท"}
     };
     const float gridLeft = 30.f, gridTop = 300.f;
     const float cellWidth = 226.f, cellHeight = 62.f;
@@ -245,25 +259,25 @@ RVCRealtime::RVCRealtime(const InstanceInfo& info)
     for (int i = 0; i < 9; ++i) {
       const int column = i % 3;
       const int row = i / 3;
-      const float x = gridLeft + column * (cellWidth + gapX);
-      const float y = gridTop + row * (cellHeight + gapY);
+      const float x = gridLeft + static_cast<float>(column) * (cellWidth + gapX);
+      const float y = gridTop + static_cast<float>(row) * (cellHeight + gapY);
       const IRECT cell(x, y, x + cellWidth, y + cellHeight);
       graphics->AttachControl(new IPanelControl(cell, kPanel));
       graphics->AttachControl(new RVCSliderControl(cell.GetPadded(-8.f), sliders[i].param,
-                                                   sliders[i].label, style, true, EDirection::Horizontal));
+        sliders[i].label, style, true, EDirection::Horizontal));
     }
 
-    // Bottom row: F0 method, output gain, engine toggle — one shared baseline
+    // Bottom row
     const float bottomY = 566.f, bottomHeight = 44.f;
-    graphics->AttachControl(new ITextControl(IRECT(30, bottomY, 100, bottomY + bottomHeight), "F0 METHOD",
-                                              IText(12.f, kMuted, "Roboto-Regular", EAlign::Near)));
-    graphics->AttachControl(new IVMenuButtonControl(IRECT(104, bottomY, 236, bottomY + bottomHeight), kF0Method,
-                                                    "", style));
-    graphics->AttachControl(new IPanelControl(IRECT(258, bottomY, 560, bottomY + bottomHeight), kPanel));
-    graphics->AttachControl(new RVCSliderControl(IRECT(266, bottomY + 2, 552, bottomY + bottomHeight - 2), kOutputGain,
-                                                 "OUTPUT", style, true, EDirection::Horizontal));
-    graphics->AttachControl(new IVToggleControl(IRECT(600, bottomY, 750, bottomY + bottomHeight), kEngine,
-                                                "ENGINE", style));
+    graphics->AttachControl(new ITextControl(IRECT(30.f, bottomY, 100.f, bottomY + bottomHeight), "F0 METHOD",
+      IText(12.f, kMuted, kPrimaryFont, EAlign::Near)));
+    graphics->AttachControl(new IVMenuButtonControl(IRECT(104.f, bottomY, 236.f, bottomY + bottomHeight), kF0Method,
+      "", style));
+    graphics->AttachControl(new IPanelControl(IRECT(258.f, bottomY, 560.f, bottomY + bottomHeight), kPanel));
+    graphics->AttachControl(new RVCSliderControl(IRECT(266.f, bottomY + 2.f, 552.f, bottomY + bottomHeight - 2.f), kOutputGain,
+      "OUTPUT / เอาต์พุต", style, true, EDirection::Horizontal));
+    graphics->AttachControl(new IVToggleControl(IRECT(600.f, bottomY, 750.f, bottomY + bottomHeight), kEngine,
+      "ENGINE / เริ่มระบบ", style));
   };
 #endif
 }
@@ -332,7 +346,6 @@ void RVCRealtime::ProcessBlock(sample** inputs, sample** outputs, const int nFra
     return;
   }
 
-  // Mono-safe passthrough: never leave output buffers unwritten.
   auto passthrough = [&]() {
     for (int channel = 0; channel < nOut; ++channel) {
       const sample* source = inputs[std::min(channel, nIn - 1)];
@@ -380,13 +393,14 @@ void RVCRealtime::ProcessBlock(sample** inputs, sample** outputs, const int nFra
     const float wet = mWetOutput[static_cast<size_t>(frame)] * gain;
     const float processedL = mDryDelay[static_cast<size_t>(read) * 2] * (1.0f - mix) + wet * mix;
     const float processedR = mDryDelay[static_cast<size_t>(read) * 2 + 1] * (1.0f - mix) + wet * mix;
-    outL[frame] = static_cast<sample>(inL[frame] * (1.0f - mActiveBlend) + processedL * mActiveBlend);
+    const double blendInv = static_cast<double>(1.0f - mActiveBlend);
+    const double blendAct = static_cast<double>(mActiveBlend);
+    outL[frame] = static_cast<sample>(inL[frame] * blendInv + static_cast<double>(processedL) * blendAct);
     if (outR)
-      outR[frame] = static_cast<sample>(inR[frame] * (1.0f - mActiveBlend) + processedR * mActiveBlend);
+      outR[frame] = static_cast<sample>(inR[frame] * blendInv + static_cast<double>(processedR) * blendAct);
   }
   mDryWritePosition = (mDryWritePosition + nFrames) % maxDelay;
 
-  // Copy to any extra connected outputs beyond stereo.
   for (int channel = 2; channel < nOut; ++channel)
     std::memcpy(outputs[channel], outputs[channel & 1], static_cast<size_t>(nFrames) * sizeof(sample));
 }
@@ -403,7 +417,7 @@ void RVCRealtime::OnIdle()
     validationMessage = mValidationMessage.Get();
   }
   if (auto* status = GetUI()->GetControlWithTag(kCtrlStatus))
-    status->As<ITextControl>()->SetStr(validationMessage.empty() ? StatusName(mWorker.status()) : "CONFIG ERROR");
+    status->As<ITextControl>()->SetStr(validationMessage.empty() ? StatusName(mWorker.status()) : "CONFIG ERROR / ตั้งค่าผิดพลาด");
   if (auto* detail = GetUI()->GetControlWithTag(kCtrlStatusDetail))
     detail->As<ITextControl>()->SetStr(validationMessage.empty() ? mWorker.statusText().c_str() : validationMessage.c_str());
   if (auto* performance = GetUI()->GetControlWithTag(kCtrlPerformance))
@@ -413,7 +427,7 @@ void RVCRealtime::OnIdle()
 
 void RVCRealtime::OnUIOpen()
 {
-  Plugin::OnUIOpen(); // pushes current param values to the UI controls
+  Plugin::OnUIOpen();
   UpdateFileLabels();
 }
 
@@ -495,10 +509,10 @@ void RVCRealtime::ChoosePython(IGraphics* graphics)
   else if (mRvcRoot.GetLength() > 0)
     path.Set(JoinPath(mRvcRoot.Get(), "runtime").c_str());
   graphics->PromptForFile(fileName, path, EFileAction::Open, "exe",
-                          [this](const WDL_String& selected, const WDL_String&) {
-    if (selected.GetLength() > 0)
-      SetPythonPath(selected.Get());
-  });
+    [this](const WDL_String& selected, const WDL_String&) {
+      if (selected.GetLength() > 0)
+        SetPythonPath(selected.Get());
+    });
 }
 
 void RVCRealtime::ChooseModel(IGraphics* graphics)
@@ -507,12 +521,12 @@ void RVCRealtime::ChooseModel(IGraphics* graphics)
   if (path.GetLength() == 0)
     path.Set(mRvcRoot.Get());
   graphics->PromptForFile(fileName, path, EFileAction::Open, "pth",
-                          [this](const WDL_String& selected, const WDL_String& selectedDirectory) {
-    if (selected.GetLength() > 0) {
-      mModelBrowseDirectory.Set(selectedDirectory.Get());
-      SetModelPath(selected.Get());
-    }
-  });
+    [this](const WDL_String& selected, const WDL_String& selectedDirectory) {
+      if (selected.GetLength() > 0) {
+        mModelBrowseDirectory.Set(selectedDirectory.Get());
+        SetModelPath(selected.Get());
+      }
+    });
 }
 
 void RVCRealtime::ChooseIndex(IGraphics* graphics)
@@ -521,12 +535,12 @@ void RVCRealtime::ChooseIndex(IGraphics* graphics)
   if (path.GetLength() == 0)
     path.Set(mRvcRoot.Get());
   graphics->PromptForFile(fileName, path, EFileAction::Open, "index",
-                          [this](const WDL_String& selected, const WDL_String& selectedDirectory) {
-    if (selected.GetLength() > 0) {
-      mIndexBrowseDirectory.Set(selectedDirectory.Get());
-      SetIndexPath(selected.Get());
-    }
-  });
+    [this](const WDL_String& selected, const WDL_String& selectedDirectory) {
+      if (selected.GetLength() > 0) {
+        mIndexBrowseDirectory.Set(selectedDirectory.Get());
+        SetIndexPath(selected.Get());
+      }
+    });
 }
 
 void RVCRealtime::SetRvcRoot(const char* path)
@@ -602,14 +616,14 @@ bool RVCRealtime::ValidateConfiguration(std::string& error) const
     model = mModelPath.Get();
     index = mIndexPath.Get();
   }
-  if (root.empty()) { error = "Select the RVC package root."; return false; }
-  if (!PathIsDirectory(root)) { error = "RVC root folder does not exist."; return false; }
-  if (!PathIsFile(JoinPath(root, "infer\\rtrvc.py"))) { error = "RVC source not found: infer\\rtrvc.py."; return false; }
-  if (!PathIsFile(JoinPath(root, "configs\\config.py"))) { error = "RVC source not found: configs\\config.py."; return false; }
-  if (python.empty()) { error = "runtime\\python.exe not found; select Python manually."; return false; }
+  if (root.empty()) { error = "Select the RVC package root / กรุณาเลือกโฟลเดอร์หลัก"; return false; }
+  if (!PathIsDirectory(root)) { error = "RVC root folder does not exist / ไม่พบโฟลเดอร์หลัก"; return false; }
+  if (!PathIsFile(JoinPath(root, "infer\\rtrvc.py"))) { error = "RVC source not found: infer\\rtrvc.py"; return false; }
+  if (!PathIsFile(JoinPath(root, "configs\\config.py"))) { error = "RVC source not found: configs\\config.py"; return false; }
+  if (python.empty()) { error = "runtime\\python.exe not found / ไม่พบไฟล์ไพธอน"; return false; }
   if (!PathIsFile(python)) { error = "Selected Python executable does not exist."; return false; }
   if (!Is64BitExecutable(python)) { error = "Selected Python must be a 64-bit executable."; return false; }
-  if (model.empty()) { error = "Select an RVC .pth model."; return false; }
+  if (model.empty()) { error = "Select an RVC .pth model / กรุณาเลือกโมเดล .pth"; return false; }
   if (!PathIsFile(model)) { error = "Selected model file does not exist."; return false; }
   if (!index.empty() && !PathIsFile(index)) { error = "Selected index file does not exist."; return false; }
   error.clear();

@@ -1,0 +1,17 @@
+418: if str(ROOT_DIR) not in sys.path:
+434: max-width: 1400px !important;
+550: return datetime.now().strftime("%H:%M:%S")
+697: info_lines.append(f"📌 RAM: {ram_gb:.1f} GB total / {ram.available / (1024**3):.1f} GB available")
+709: info_lines.append(f"📌 PyTorch: {torch.__version__}")
+722: info_lines.append("❌ PyTorch: Not installed!")
+898: msg += f"\n   Path: {project_dir}"
+1092: if '/' in ph:
+1633: mtime = datetime.fromtimestamp(ckpt.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+1634: lines.append(f"   📌 Step {step:>8}  |  {size_mb:>7.1f} MB  |  {mtime}")
+1791: log_lines.append(f"   📦 {of.name} ({size_mb:.1f} MB)")
+1830: max-width: 1400px !important;
+1979: input_audio0 = gr.Textbox(label="เส้นทางไฟล์เสียงต้นฉบับ (Source Audio Path)", placeholder=r"B:\Export to UTAU\Test.wav", value=r"B:\Export to UTAU\Test.wav")
+2008: opt_input = gr.Textbox(label="ไดเรกทอรีส่งออก (Output Directory)", value=r"B:\Render file to UTAU\Singer\Language")
+2023: dir_input = gr.Textbox(label="เส้นทางโฟลเดอร์ต้นฉบับ (Source Directory Path)", value=r"B:\Export to UTAU\EN", placeholder=r"B:\Export to UTAU\EN")
+2064: trainset_dir4 = gr.Textbox(label="โฟลเดอร์ชุดข้อมูล (Dataset Directory)", value=r"B:\Data\Singer...")
+2788: if config.iscolab:

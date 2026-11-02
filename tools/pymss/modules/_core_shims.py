@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: _core_shims.py
+# Path: tools\pymss\modules\_core_shims.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 from importlib import import_module
 import sys
 

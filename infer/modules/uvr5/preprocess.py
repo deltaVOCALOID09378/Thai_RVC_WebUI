@@ -1,91 +1,88 @@
 # ==============================================================================
-# Made And Checked By DELTA SYNTH & All Agentic AI
-# Original by RVC-Project
-# File: infer/modules/uvr5/preprocess.py | Version: 1.3
-# Description: [EN] UVR5 Audio Preprocessing / [TH] การเตรียมข้อมูลเสียงสำหรับ UVR5
+# File: preprocess.py
+# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\modules\uvr5\preprocess.py
+# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
+# Version: 1.3
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
 # ==============================================================================
-
 import os
-import sys
-import subprocess
 import logging
-import gc
-import numpy as np
-import torch
-import librosa
-import soundfile as sf
-
-from infer.modules.uvr5.vr_network import nets
-from infer.modules.uvr5.vr_network import spec_utils
 
 logger = logging.getLogger(__name__)
 
+import librosa
+import numpy as np
+import soundfile as sf
+import torch
+
+from infer.lib.uvr5_pack.lib_v5 import nets_61968KB as Nets
+from infer.lib.uvr5_pack.lib_v5 import spec_utils
+from infer.lib.uvr5_pack.lib_v5.model_param_init import ModelParameters
+from infer.lib.uvr5_pack.lib_v5.nets_new import CascadedNet
+from infer.lib.uvr5_pack.utils import inference
+
+
 class AudioPre:
-    def __init__(self, agg, model_path, device, is_half):
+    def __init__(self, agg, model_path, device, is_half, tta=False):
         self.model_path = model_path
         self.device = device
-        self.is_half = is_half
-        self.model_name = os.path.basename(model_path)
-        self.agg = agg
-        self.window_size = 512
-        self.batch_size = 4
-        self.crop_size = 256
-        
         self.data = {
-            1: {"mid_side": False, "mid_side_b2": False, "mid_side_b2_ogg": False, "coef": 100},
-            2: {"mid_side": False, "mid_side_b2": False, "mid_side_b2_ogg": False, "coef": 100},
+            # Processing Options
+            "postprocess": False,
+            "tta": tta,
+            # Constants
+            "window_size": 512,
+            "agg": agg,
+            "high_end_process": "mirroring",
         }
-        
-        self.mp = nets.ModelParameters("infer/modules/uvr5/vr_network/modelparams/4band_v2.json")
-        self.model = nets.CascadedASPPNet(self.mp.param["bins"] * 2)
-        cpk = torch.load(self.model_path, map_location="cpu", weights_only=False)
-        self.model.load_state_dict(cpk)
-        self.model.eval()
-        if self.is_half:
-            self.model = self.model.half()
-        self.model = self.model.to(self.device)
+        mp = ModelParameters("infer/lib/uvr5_pack/lib_v5/modelparams/4band_v2.json")
+        model = Nets.CascadedASPPNet(mp.param["bins"] * 2)
+        cpk = torch.load(model_path, map_location="cpu")
+        model.load_state_dict(cpk)
+        model.eval()
+        if is_half:
+            model = model.half().to(device)
+        else:
+            model = model.to(device)
 
-    def _path_audio_(self, music_file, ins_root=None, vocal_root=None, format0="flac", is_hp3=False):
+        self.mp = mp
+        self.model = model
+
+    def _path_audio_(self, music_file, ins_root=None, vocal_root=None, format="flac"):
         if ins_root is None and vocal_root is None:
-            return "No save root specified."
-            
+            return "No save root."
         name = os.path.basename(music_file)
         if ins_root is not None:
             os.makedirs(ins_root, exist_ok=True)
         if vocal_root is not None:
             os.makedirs(vocal_root, exist_ok=True)
-
-        inp_path = music_file
-        
-        # [ZERO-DEFECT FIX]: Safe FFmpeg execution
-        temp_dir = os.environ.get("TEMP", os.path.join(os.getcwd(), "TEMP"))
-        os.makedirs(temp_dir, exist_ok=True)
-        tmp_path = os.path.join(temp_dir, f"{name}.reformatted.wav")
-        
-        try:
-            cmd = ['ffmpeg', '-y', '-i', inp_path, '-vn', '-ar', '44100', '-ac', '2', '-sample_fmt', 's16', tmp_path]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"🔴 ล้มเหลวในการแปลงไฟล์ด้วย FFmpeg (FFmpeg Error) on {name}: {str(e)}")
-            raise RuntimeError(f"FFmpeg failed to format audio: {name}")
-
         X_wave, y_wave, X_spec_s, y_spec_s = {}, {}, {}, {}
         bands_n = len(self.mp.param["band"])
-        
+        # print(bands_n)
         for d in range(bands_n, 0, -1):
             bp = self.mp.param["band"][d]
-            if d == bands_n:
-                X_wave[d], _ = librosa.core.load(tmp_path, sr=bp["sr"], res_type=bp["res_type"])
-                if X_wave[d].ndim == 1:
-                    X_wave[d] = np.asfortranarray([X_wave[d], X_wave[d]])
-            else:
-                X_wave[d] = librosa.core.resample(
-                    X_wave[d + 1],
-                    orig_sr=self.mp.param["band"][d + 1]["sr"],
-                    target_sr=bp["sr"],
+            if d == bands_n:  # high-end band
+                (
+                    X_wave[d],
+                    _,
+                ) = librosa.core.load(  # EN_TranslationlibrosaEN_Translationbug，EN_TranslationffmpegEN_Translation，EN_Translation
+                    music_file,
+                    bp["sr"],
+                    False,
+                    dtype=np.float32,
                     res_type=bp["res_type"],
                 )
-                
+                if X_wave[d].ndim == 1:
+                    X_wave[d] = np.asfortranarray([X_wave[d], X_wave[d]])
+            else:  # lower bands
+                X_wave[d] = librosa.core.resample(
+                    X_wave[d + 1],
+                    self.mp.param["band"][d + 1]["sr"],
+                    bp["sr"],
+                    res_type=bp["res_type"],
+                )
+            # Stft of wave source
             X_spec_s[d] = spec_utils.wave_to_spectrogram_mt(
                 X_wave[d],
                 bp["hl"],
@@ -94,111 +91,165 @@ class AudioPre:
                 self.mp.param["mid_side_b2"],
                 self.mp.param["reverse"],
             )
-            
-            if d == bands_n and self.data[d]["coef"] > 1:
-                X_spec_s[d] = spec_utils.merge_artifacts(X_spec_s[d], self.data[d])
+            # pdb.set_trace()
+            if d == bands_n and self.data["high_end_process"] != "none":
+                input_high_end_h = (bp["n_fft"] // 2 - bp["crop_stop"]) + (
+                    self.mp.param["pre_filter_stop"] - self.mp.param["pre_filter_start"]
+                )
+                input_high_end = X_spec_s[d][
+                    :, bp["n_fft"] // 2 - input_high_end_h : bp["n_fft"] // 2, :
+                ]
 
-        X_mag = np.abs(X_spec_s[1])
-        X_phase = np.angle(X_spec_s[1])
-        
-        v_mag = np.zeros_like(X_mag)
-        length = X_mag.shape[2]
-        overlap = self.crop_size // 2
-        padded_mag = np.pad(X_mag, ((0, 0), (0, 0), (0, self.crop_size)), mode='constant')
-        
-        for i in range(0, length, overlap):
-            crop = padded_mag[:, :, i:i+self.crop_size]
-            if crop.shape[2] < self.crop_size:
-                break
-                
-            x_t = torch.from_numpy(crop).unsqueeze(0).to(self.device)
-            if self.is_half:
-                x_t = x_t.half()
-                
-            with torch.no_grad():
-                pred = self.model(x_t)
-                
-            v_mag[:, :, i:i+self.crop_size] += pred.squeeze(0).cpu().numpy()
+        X_spec_m = spec_utils.combine_spectrograms(X_spec_s, self.mp)
+        aggresive_set = float(self.data["agg"] / 100)
+        aggressiveness = {
+            "value": aggresive_set,
+            "split_bin": self.mp.param["band"][1]["crop_stop"],
+        }
+        with torch.no_grad():
+            pred, X_mag, X_phase = inference(
+                X_spec_m, self.device, self.model, aggressiveness, self.data
+            )
+        # Postprocess
+        if self.data["postprocess"]:
+            pred_inv = np.clip(X_mag - pred, 0, np.inf)
+            pred = spec_utils.mask_silence(pred, pred_inv)
+        y_spec_m = pred * X_phase
+        v_spec_m = X_spec_m - y_spec_m
 
-        v_mag /= 2.0
-        v_mag = v_mag[:, :, :length]
-        
-        v_mag = v_mag * (self.agg / 10.0)
-        i_mag = X_mag - v_mag
+        if ins_root is not None:
+            if self.data["high_end_process"].startswith("mirroring"):
+                input_high_end_ = spec_utils.mirroring(
+                    self.data["high_end_process"], y_spec_m, input_high_end, self.mp
+                )
+                wav_instrument = spec_utils.cmb_spectrogram_to_wave(
+                    y_spec_m, self.mp, input_high_end_h, input_high_end_
+                )
+            else:
+                wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
+            logger.info("%s instruments done" % name)
+            if format in ["wav", "flac"]:
+                sf.write(
+                    os.path.join(
+                        ins_root,
+                        "instrument_{}_{}.{}".format(name, self.data["agg"], format),
+                    ),
+                    (np.array(wav_instrument) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )  #
+            else:
+                path = os.path.join(
+                    ins_root, "instrument_{}_{}.wav".format(name, self.data["agg"])
+                )
+                sf.write(
+                    path,
+                    (np.array(wav_instrument) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+                if os.path.exists(path):
+                    os.system(
+                        "ffmpeg -i %s -vn %s -q:a 2 -y"
+                        % (path, path[:-4] + ".%s" % format)
+                    )
+        if vocal_root is not None:
+            if self.data["high_end_process"].startswith("mirroring"):
+                input_high_end_ = spec_utils.mirroring(
+                    self.data["high_end_process"], v_spec_m, input_high_end, self.mp
+                )
+                wav_vocals = spec_utils.cmb_spectrogram_to_wave(
+                    v_spec_m, self.mp, input_high_end_h, input_high_end_
+                )
+            else:
+                wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
+            logger.info("%s vocals done" % name)
+            if format in ["wav", "flac"]:
+                sf.write(
+                    os.path.join(
+                        vocal_root,
+                        "vocal_{}_{}.{}".format(name, self.data["agg"], format),
+                    ),
+                    (np.array(wav_vocals) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+            else:
+                path = os.path.join(
+                    vocal_root, "vocal_{}_{}.wav".format(name, self.data["agg"])
+                )
+                sf.write(
+                    path,
+                    (np.array(wav_vocals) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+                if os.path.exists(path):
+                    os.system(
+                        "ffmpeg -i %s -vn %s -q:a 2 -y"
+                        % (path, path[:-4] + ".%s" % format)
+                    )
 
-        y_spec_m = v_mag * np.exp(1.j * X_phase)
-        v_wave = spec_utils.spectrogram_to_wave(
-            y_spec_m, hl=self.mp.param["band"][1]["hl"], n_fft=self.mp.param["band"][1]["n_fft"]
-        )
-        
-        i_spec_m = i_mag * np.exp(1.j * X_phase)
-        i_wave = spec_utils.spectrogram_to_wave(
-            i_spec_m, hl=self.mp.param["band"][1]["hl"], n_fft=self.mp.param["band"][1]["n_fft"]
-        )
 
-        vocal_name = f"vocal_{name}.{format0}"
-        ins_name = f"instrument_{name}.{format0}"
-        
-        if is_hp3:
-            sf.write(os.path.join(vocal_root, vocal_name), i_wave.T, self.mp.param["band"][1]["sr"])
-            sf.write(os.path.join(ins_root, ins_name), v_wave.T, self.mp.param["band"][1]["sr"])
+class AudioPreDeEcho:
+    def __init__(self, agg, model_path, device, is_half, tta=False):
+        self.model_path = model_path
+        self.device = device
+        self.data = {
+            # Processing Options
+            "postprocess": False,
+            "tta": tta,
+            # Constants
+            "window_size": 512,
+            "agg": agg,
+            "high_end_process": "mirroring",
+        }
+        mp = ModelParameters("infer/lib/uvr5_pack/lib_v5/modelparams/4band_v3.json")
+        nout = 64 if "DeReverb" in model_path else 48
+        model = CascadedNet(mp.param["bins"] * 2, nout)
+        cpk = torch.load(model_path, map_location="cpu")
+        model.load_state_dict(cpk)
+        model.eval()
+        if is_half:
+            model = model.half().to(device)
         else:
-            sf.write(os.path.join(vocal_root, vocal_name), v_wave.T, self.mp.param["band"][1]["sr"])
-            sf.write(os.path.join(ins_root, ins_name), i_wave.T, self.mp.param["band"][1]["sr"])
+            model = model.to(device)
 
-        if os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except:
-                pass
-                
-        # [ZERO-DEFECT FIX]: Clear Tensor memory cache to prevent memory leaks in loop
-        del X_wave, y_wave, X_spec_s, y_spec_s, X_mag, X_phase, v_mag, i_mag, y_spec_m, v_wave, i_spec_m, i_wave
-        gc.collect()
+        self.mp = mp
+        self.model = model
 
-class AudioPreDeEcho(AudioPre):
-    def __init__(self, agg, model_path, device, is_half):
-        super().__init__(agg, model_path, device, is_half)
-
-    def _path_audio_(self, music_file, ins_root=None, vocal_root=None, format0="flac", is_hp3=False):
+    def _path_audio_(
+        self, music_file, vocal_root=None, ins_root=None, format="flac"
+    ):  # 3EN_TranslationVREN_TranslationvocalEN_TranslationinsEN_Translation
         if ins_root is None and vocal_root is None:
-            return "No save root specified."
-            
+            return "No save root."
         name = os.path.basename(music_file)
         if ins_root is not None:
             os.makedirs(ins_root, exist_ok=True)
         if vocal_root is not None:
             os.makedirs(vocal_root, exist_ok=True)
-
-        inp_path = music_file
-        temp_dir = os.environ.get("TEMP", os.path.join(os.getcwd(), "TEMP"))
-        os.makedirs(temp_dir, exist_ok=True)
-        tmp_path = os.path.join(temp_dir, f"{name}.reformatted.wav")
-        
-        try:
-            cmd = ['ffmpeg', '-y', '-i', inp_path, '-vn', '-ar', '44100', '-ac', '2', '-sample_fmt', 's16', tmp_path]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"🔴 ล้มเหลวในการแปลงไฟล์ด้วย FFmpeg (FFmpeg Error) on {name}: {str(e)}")
-            raise RuntimeError(f"FFmpeg failed to format audio: {name}")
-
         X_wave, y_wave, X_spec_s, y_spec_s = {}, {}, {}, {}
         bands_n = len(self.mp.param["band"])
-        
+        # print(bands_n)
         for d in range(bands_n, 0, -1):
             bp = self.mp.param["band"][d]
-            if d == bands_n:
-                X_wave[d], _ = librosa.core.load(tmp_path, sr=bp["sr"], res_type=bp["res_type"])
-                if X_wave[d].ndim == 1:
-                    X_wave[d] = np.asfortranarray([X_wave[d], X_wave[d]])
-            else:
-                X_wave[d] = librosa.core.resample(
-                    X_wave[d + 1],
-                    orig_sr=self.mp.param["band"][d + 1]["sr"],
-                    target_sr=bp["sr"],
+            if d == bands_n:  # high-end band
+                (
+                    X_wave[d],
+                    _,
+                ) = librosa.core.load(  # EN_TranslationlibrosaEN_Translationbug，EN_TranslationffmpegEN_Translation，EN_Translation
+                    music_file,
+                    bp["sr"],
+                    False,
+                    dtype=np.float32,
                     res_type=bp["res_type"],
                 )
-                
+                if X_wave[d].ndim == 1:
+                    X_wave[d] = np.asfortranarray([X_wave[d], X_wave[d]])
+            else:  # lower bands
+                X_wave[d] = librosa.core.resample(
+                    X_wave[d + 1],
+                    self.mp.param["band"][d + 1]["sr"],
+                    bp["sr"],
+                    res_type=bp["res_type"],
+                )
+            # Stft of wave source
             X_spec_s[d] = spec_utils.wave_to_spectrogram_mt(
                 X_wave[d],
                 bp["hl"],
@@ -207,64 +258,97 @@ class AudioPreDeEcho(AudioPre):
                 self.mp.param["mid_side_b2"],
                 self.mp.param["reverse"],
             )
-            
-            if d == bands_n and self.data[d]["coef"] > 1:
-                X_spec_s[d] = spec_utils.merge_artifacts(X_spec_s[d], self.data[d])
+            # pdb.set_trace()
+            if d == bands_n and self.data["high_end_process"] != "none":
+                input_high_end_h = (bp["n_fft"] // 2 - bp["crop_stop"]) + (
+                    self.mp.param["pre_filter_stop"] - self.mp.param["pre_filter_start"]
+                )
+                input_high_end = X_spec_s[d][
+                    :, bp["n_fft"] // 2 - input_high_end_h : bp["n_fft"] // 2, :
+                ]
 
-        X_mag = np.abs(X_spec_s[1])
-        X_phase = np.angle(X_spec_s[1])
-        
-        v_mag = np.zeros_like(X_mag)
-        length = X_mag.shape[2]
-        overlap = self.crop_size // 2
-        padded_mag = np.pad(X_mag, ((0, 0), (0, 0), (0, self.crop_size)), mode='constant')
-        
-        for i in range(0, length, overlap):
-            crop = padded_mag[:, :, i:i+self.crop_size]
-            if crop.shape[2] < self.crop_size:
-                break
-                
-            x_t = torch.from_numpy(crop).unsqueeze(0).to(self.device)
-            if self.is_half:
-                x_t = x_t.half()
-                
-            with torch.no_grad():
-                pred = self.model(x_t)
-                
-            v_mag[:, :, i:i+self.crop_size] += pred.squeeze(0).cpu().numpy()
+        X_spec_m = spec_utils.combine_spectrograms(X_spec_s, self.mp)
+        aggresive_set = float(self.data["agg"] / 100)
+        aggressiveness = {
+            "value": aggresive_set,
+            "split_bin": self.mp.param["band"][1]["crop_stop"],
+        }
+        with torch.no_grad():
+            pred, X_mag, X_phase = inference(
+                X_spec_m, self.device, self.model, aggressiveness, self.data
+            )
+        # Postprocess
+        if self.data["postprocess"]:
+            pred_inv = np.clip(X_mag - pred, 0, np.inf)
+            pred = spec_utils.mask_silence(pred, pred_inv)
+        y_spec_m = pred * X_phase
+        v_spec_m = X_spec_m - y_spec_m
 
-        v_mag /= 2.0
-        v_mag = v_mag[:, :, :length]
-        
-        v_mag = v_mag * (self.agg / 10.0)
-        i_mag = X_mag - v_mag
-
-        y_spec_m = v_mag * np.exp(1.j * X_phase)
-        v_wave = spec_utils.spectrogram_to_wave(
-            y_spec_m, hl=self.mp.param["band"][1]["hl"], n_fft=self.mp.param["band"][1]["n_fft"]
-        )
-        
-        i_spec_m = i_mag * np.exp(1.j * X_phase)
-        i_wave = spec_utils.spectrogram_to_wave(
-            i_spec_m, hl=self.mp.param["band"][1]["hl"], n_fft=self.mp.param["band"][1]["n_fft"]
-        )
-
-        vocal_name = f"vocal_{name}.{format0}"
-        ins_name = f"instrument_{name}.{format0}"
-        
-        if is_hp3:
-            sf.write(os.path.join(ins_root, ins_name), i_wave.T, self.mp.param["band"][1]["sr"])
-            sf.write(os.path.join(vocal_root, vocal_name), v_wave.T, self.mp.param["band"][1]["sr"])
-        else:
-            sf.write(os.path.join(ins_root, ins_name), v_wave.T, self.mp.param["band"][1]["sr"])
-            sf.write(os.path.join(vocal_root, vocal_name), i_wave.T, self.mp.param["band"][1]["sr"])
-
-        if os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except:
-                pass
-        
-        # [ZERO-DEFECT FIX]: Clear Tensor memory cache to prevent memory leaks in loop
-        del X_wave, y_wave, X_spec_s, y_spec_s, X_mag, X_phase, v_mag, i_mag, y_spec_m, v_wave, i_spec_m, i_wave
-        gc.collect()
+        if ins_root is not None:
+            if self.data["high_end_process"].startswith("mirroring"):
+                input_high_end_ = spec_utils.mirroring(
+                    self.data["high_end_process"], y_spec_m, input_high_end, self.mp
+                )
+                wav_instrument = spec_utils.cmb_spectrogram_to_wave(
+                    y_spec_m, self.mp, input_high_end_h, input_high_end_
+                )
+            else:
+                wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
+            logger.info("%s instruments done" % name)
+            if format in ["wav", "flac"]:
+                sf.write(
+                    os.path.join(
+                        ins_root,
+                        "instrument_{}_{}.{}".format(name, self.data["agg"], format),
+                    ),
+                    (np.array(wav_instrument) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )  #
+            else:
+                path = os.path.join(
+                    ins_root, "instrument_{}_{}.wav".format(name, self.data["agg"])
+                )
+                sf.write(
+                    path,
+                    (np.array(wav_instrument) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+                if os.path.exists(path):
+                    os.system(
+                        "ffmpeg -i %s -vn %s -q:a 2 -y"
+                        % (path, path[:-4] + ".%s" % format)
+                    )
+        if vocal_root is not None:
+            if self.data["high_end_process"].startswith("mirroring"):
+                input_high_end_ = spec_utils.mirroring(
+                    self.data["high_end_process"], v_spec_m, input_high_end, self.mp
+                )
+                wav_vocals = spec_utils.cmb_spectrogram_to_wave(
+                    v_spec_m, self.mp, input_high_end_h, input_high_end_
+                )
+            else:
+                wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
+            logger.info("%s vocals done" % name)
+            if format in ["wav", "flac"]:
+                sf.write(
+                    os.path.join(
+                        vocal_root,
+                        "vocal_{}_{}.{}".format(name, self.data["agg"], format),
+                    ),
+                    (np.array(wav_vocals) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+            else:
+                path = os.path.join(
+                    vocal_root, "vocal_{}_{}.wav".format(name, self.data["agg"])
+                )
+                sf.write(
+                    path,
+                    (np.array(wav_vocals) * 32768).astype("int16"),
+                    self.mp.param["sr"],
+                )
+                if os.path.exists(path):
+                    os.system(
+                        "ffmpeg -i %s -vn %s -q:a 2 -y"
+                        % (path, path[:-4] + ".%s" % format)
+                    )

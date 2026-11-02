@@ -121,17 +121,51 @@ public class PythonEngineService : IDisposable
 
     public async Task<int> RunScriptAsync(string relativeScriptPath, string arguments, CancellationToken cancellationToken = default)
     {
-        string fullScriptPath = Path.Combine(_projectRoot, relativeScriptPath);
-        if (!File.Exists(fullScriptPath))
+        string fullScriptPath;
+        string finalArguments;
+
+        // Defensive normalization: If caller passes runtime/python.exe or python executable as the script,
+        // treat this as direct execution mode without duplicating the executable in arguments.
+        bool isPythonExe = string.Equals(relativeScriptPath, "python", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(relativeScriptPath, "python.exe", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(relativeScriptPath, "runtime/python.exe", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(relativeScriptPath, "runtime\\python.exe", StringComparison.OrdinalIgnoreCase) ||
+                           relativeScriptPath.EndsWith("python.exe", StringComparison.OrdinalIgnoreCase);
+
+        if (isPythonExe)
         {
-            OutputReceived?.Invoke($"🔴 [ERROR] ไม่พบไฟล์สคริปต์ (Script Not Found): {fullScriptPath}", true);
-            return -1;
+            fullScriptPath = _pythonExe;
+            finalArguments = arguments;
+        }
+        else
+        {
+            fullScriptPath = Path.IsPathRooted(relativeScriptPath)
+                ? relativeScriptPath
+                : Path.Combine(_projectRoot, relativeScriptPath);
+
+            // Fallback: check under tools directory if not found in root
+            if (!File.Exists(fullScriptPath))
+            {
+                string toolsCandidate = Path.Combine(_projectRoot, "tools", relativeScriptPath);
+                if (File.Exists(toolsCandidate))
+                {
+                    fullScriptPath = toolsCandidate;
+                }
+            }
+
+            if (!File.Exists(fullScriptPath))
+            {
+                OutputReceived?.Invoke($"🔴 [ERROR] ไม่พบไฟล์สคริปต์ (Script Not Found): {fullScriptPath}", true);
+                return -1;
+            }
+
+            finalArguments = $"\"{fullScriptPath}\" {arguments}";
         }
 
         var psi = new ProcessStartInfo
         {
             FileName = _pythonExe,
-            Arguments = $"\"{fullScriptPath}\" {arguments}",
+            Arguments = finalArguments,
             WorkingDirectory = _projectRoot,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -142,6 +176,8 @@ public class PythonEngineService : IDisposable
         };
 
         psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+        psi.EnvironmentVariables["PYTHONUTF8"] = "1";
+        psi.EnvironmentVariables["NO_PROXY"] = "localhost,127.0.0.1,0.0.0.0";
 
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _activeTaskProcess = process;
@@ -175,9 +211,17 @@ public class PythonEngineService : IDisposable
             catch { }
         }))
         {
-            await process.WaitForExitAsync(cancellationToken);
-            _activeTaskProcess = null;
-            return process.ExitCode;
+            try
+            {
+                await process.WaitForExitAsync(cancellationToken);
+                _activeTaskProcess = null;
+                return process.ExitCode;
+            }
+            catch (OperationCanceledException)
+            {
+                _activeTaskProcess = null;
+                return -999;
+            }
         }
     }
 

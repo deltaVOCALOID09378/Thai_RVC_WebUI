@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: checkpoint.py
+# Path: tools\pymss_core\checkpoint.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 """Checkpoint helpers shared by inference and training frontends."""
 
 from __future__ import annotations

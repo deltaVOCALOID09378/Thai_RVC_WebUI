@@ -1,5 +1,13 @@
+# ==============================================================================
+# File: torchgate.py
+# Path: tools\torchgate\torchgate.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import torch
-from infer.rmvpe import STFT
+from infer.lib.rmvpe import STFT
 from torch.nn.functional import conv1d, conv2d
 from typing import Union, Optional
 from .utils import linspace, temperature_sigmoid, amp_to_db
@@ -32,18 +40,18 @@ class TorchGate(torch.nn.Module):
     @torch.no_grad()
     def __init__(
         self,
-        sr,
-        nonstationary = False,
-        n_std_thresh_stationary = 1.5,
-        n_thresh_nonstationary = 1.3,
-        temp_coeff_nonstationary = 0.1,
-        n_movemean_nonstationary = 20,
-        prop_decrease = 1.0,
-        n_fft = 1024,
-        win_length = None,
-        hop_length = None,
-        freq_mask_smooth_hz = 500,
-        time_mask_smooth_ms = 50,
+        sr: int,
+        nonstationary: bool = False,
+        n_std_thresh_stationary: float = 1.5,
+        n_thresh_nonstationary: float = 1.3,
+        temp_coeff_nonstationary: float = 0.1,
+        n_movemean_nonstationary: int = 20,
+        prop_decrease: float = 1.0,
+        n_fft: int = 1024,
+        win_length: bool = None,
+        hop_length: int = None,
+        freq_mask_smooth_hz: float = 500,
+        time_mask_smooth_ms: float = 50,
     ):
         super().__init__()
 
@@ -57,11 +65,6 @@ class TorchGate(torch.nn.Module):
         self.n_fft = n_fft
         self.win_length = self.n_fft if win_length is None else win_length
         self.hop_length = self.win_length // 4 if hop_length is None else hop_length
-        self.register_buffer(
-            "stft_window",
-            torch.hann_window(self.win_length),
-            persistent=False,
-        )
 
         # Stationary Params
         self.n_std_thresh_stationary = n_std_thresh_stationary
@@ -77,7 +80,7 @@ class TorchGate(torch.nn.Module):
         self.register_buffer("smoothing_filter", self._generate_mask_smoothing_filter())
 
     @torch.no_grad()
-    def _generate_mask_smoothing_filter(self) :
+    def _generate_mask_smoothing_filter(self) -> Union[torch.Tensor, None]:
         """
         A PyTorch module that applies a spectral gate to an input signal using the STFT.
 
@@ -131,8 +134,8 @@ class TorchGate(torch.nn.Module):
 
     @torch.no_grad()
     def _stationary_mask(
-        self, X_db, xn = None
-    ) :
+        self, X_db: torch.Tensor, xn: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Computes a stationary binary mask to filter out noise in a log-magnitude spectrogram.
 
@@ -163,7 +166,7 @@ class TorchGate(torch.nn.Module):
                     return_complex=True,
                     pad_mode="constant",
                     center=True,
-                    window=self.stft_window,
+                    window=torch.hann_window(self.win_length).to(xn.device),
                 )
             XN_db = amp_to_db(XN).to(dtype=X_db.dtype)
         else:
@@ -180,7 +183,7 @@ class TorchGate(torch.nn.Module):
         return sig_mask
 
     @torch.no_grad()
-    def _nonstationary_mask(self, X_abs) :
+    def _nonstationary_mask(self, X_abs: torch.Tensor) -> torch.Tensor:
         """
         Computes a non-stationary binary mask to filter out noise in a log-magnitude spectrogram.
 
@@ -213,8 +216,8 @@ class TorchGate(torch.nn.Module):
         return sig_mask
 
     def forward(
-        self, x, xn = None
-    ) :
+        self, x: torch.Tensor, xn: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Apply the proposed algorithm to the input signal.
 
@@ -246,7 +249,7 @@ class TorchGate(torch.nn.Module):
                 return_complex=True,
                 pad_mode="constant",
                 center=True,
-                window=self.stft_window,
+                window=torch.hann_window(self.win_length).to(x.device),
             )
 
         # Compute signal mask based on stationary or nonstationary assumptions
@@ -279,7 +282,7 @@ class TorchGate(torch.nn.Module):
                 hop_length=self.hop_length,
                 win_length=self.win_length,
                 center=True,
-                window=self.stft_window,
+                window=torch.hann_window(self.win_length).to(Y.device),
             )
 
         return y.to(dtype=x.dtype)

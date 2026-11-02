@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# File: gradscaler.py
-# Path: infer\modules\ipex\gradscaler.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.3
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# ชื่อไฟล์โค้ด (File Name)     : gradscaler.py
+# เวอร์ชั่นโค้ด (Version)      : 1.3 (Intel ARC XPU Acceleration Module)
+# ตำแหน่งจัดเก็บ (Location)   : infer/modules/ipex/gradscaler.py
+# หน้าที่ (Function/Role)     : ตัวปรับสเกลเกรเดียนต์ AMP สำหรับการฝึกสอนบน Intel XPU
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 from collections import defaultdict
 import torch
 import intel_extension_for_pytorch as ipex  # pylint: disable=import-error, unused-import

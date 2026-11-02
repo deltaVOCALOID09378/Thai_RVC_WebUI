@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: bandsplit.py
+# Path: tools\pymss_core\modules\bandit\core\model\bsrnn\bandsplit.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 from typing import List, Tuple
 
 from ....bandsplit import NormFC, _ConfiguredBandSplitModule

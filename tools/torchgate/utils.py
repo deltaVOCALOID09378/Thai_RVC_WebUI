@@ -1,11 +1,19 @@
+# ==============================================================================
+# File: utils.py
+# Path: tools\torchgate\utils.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import torch
 from torch.types import Number
 
 
 @torch.no_grad()
 def amp_to_db(
-    x, eps=torch.finfo(torch.float64).eps, top_db=40
-) :
+    x: torch.Tensor, eps=torch.finfo(torch.float64).eps, top_db=40
+) -> torch.Tensor:
     """
     Convert the input tensor from amplitude to decibel scale.
 
@@ -26,7 +34,7 @@ def amp_to_db(
 
 
 @torch.no_grad()
-def temperature_sigmoid(x, x0, temp_coeff) :
+def temperature_sigmoid(x: torch.Tensor, x0: float, temp_coeff: float) -> torch.Tensor:
     """
     Apply a sigmoid function with temperature scaling.
 
@@ -43,8 +51,8 @@ def temperature_sigmoid(x, x0, temp_coeff) :
 
 @torch.no_grad()
 def linspace(
-    start, stop, num = 50, endpoint = True, **kwargs
-) :
+    start: Number, stop: Number, num: int = 50, endpoint: bool = True, **kwargs
+) -> torch.Tensor:
     """
     Generate a linearly spaced 1-D tensor.
 

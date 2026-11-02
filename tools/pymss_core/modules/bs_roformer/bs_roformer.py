@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: bs_roformer.py
+# Path: tools\pymss_core\modules\bs_roformer\bs_roformer.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 from torch.nn import Module
 
 from typing import Callable, Optional, Tuple

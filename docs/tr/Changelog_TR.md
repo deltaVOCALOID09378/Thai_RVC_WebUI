@@ -1,21 +1,3 @@
-### 2026-07-23
-- Vokal ve eşlik ayırma arka ucu UVR5'ten PyMSS'ye geçirildi ve çıkarım sırasında ayırma işleminin kesilmesi desteklendi (daha iyi bir vokal ayırma algoritması çıkarım kalitesini önemli ölçüde iyileştirebilir).
-- Giriş sesinin okunması ve yeniden örneklenmesi, mümkün olduğunda GPU üzerinde işlenecek şekilde optimize edildi; böylece çıkarım verimliliği artırıldı ve CPU kullanımı azaltıldı.
-- Gerçek zamanlı ses dönüştürmede giriş veya çıkış gürültü azaltma etkinleştirildiğinde oluşan CUDA Graph hatası düzeltildi.
-- Windows ortamındaki eğitim süreçleri için libuv uyumluluk sorunu giderildi.
-
-### 2026-07-18
-- Web arayüzünün kullanım karmaşıklığı azaltıldı (ses çıkarımı girişi için artık dosya yolu gerekmiyor, ön uçtaki gerçek zamanlı günlükler iyileştirildi, çıkarım için küçük model kaydedildikten sonra model listesi otomatik olarak yenileniyor, çıkarım ana sayfasında model seçildikten sonra eşleşen index yolu otomatik olarak algılanıyor vb.).
-- Veri özelliği çıkarımı, model eğitimi ve indeks oluşturma aşamaları artık yarıda durdurulabilir ve yeniden başlatmanın ardından kaldığı yerden sürdürülebilir.
-- Çıkarım modu ve hassasiyeti belirlemek için GPU otomatik olarak algılanır.
-- Bağımlılık sorunları giderildi (pyworld, fairseq, matplotlib, PyAV ve ONNX Runtime GPU ortamlarıyla ilgili sorunlar dahil).
-- Kodlama sorunları çözüldü.
-- Web arayüzü artık başlangıçta kullanılabilir bir bağlantı noktasını otomatik olarak arar.
-- Tek GPU ile eğitim artık DDP kullanmıyor.
-- Temel model değişmedi. Çıktı kalitesini etkileyen çeşitli sorunlar giderildi. Paketlenmiş paketi/kodu güncelleyip mevcut ince ayarlı modelle çıkarımı yeniden çalıştırmak veya yeni sürümle yeniden eğitim yapıp ardından çıkarım çalıştırmak sonuçları iyileştirebilir.
-- FCPE perde çıkarma algoritması desteği eklendi.
-- Gerçek zamanlı ses dönüştürme GUI'si CUDA Graph çıkarım hızlandırmasını destekler; algoritma çıkarım gecikmesinde 4.7×'e kadar hızlanma sağlar (RTX 4090D üzerinde test edilmiştir), GPU kullanımı ise yaklaşık 20–30% düzeyinde kalır.
-- Açıkça eski veya artık yararlı olmayan özellikler kaldırıldı.
 
 ### 2023-08-13
 1- Düzenli hata düzeltmeleri
@@ -91,7 +73,7 @@ Yapılacaklar listesi:
 - Sessiz giriş/çıkışın rastgele ünsüzler veya gürültü üretme sorununu düzeltme (eski modeller yeni bir veri kümesiyle tekrar eğitilmelidir)
 
 ### 2023-04-16 Güncellemesi
-- Yerel gerçek zamanlı ses değiştirme mini-GUI'si ekleme, çift tıklayarak go-realtime_gui.bat ile başlayın
+- Yerel gerçek zamanlı ses değiştirme mini-GUI'si ekleme, çift tıklayarak go-realtime-gui.bat ile başlayın
 - Eğitim ve çıkarım sırasında 50Hz'nin altındaki frekans bantlarını filtreleme uygulama
 - Pyworld'deki varsayılan 80'den 50'ye minimum ton çıkarma sınırlamasını eğitim ve çıkarım için düşürme, 50-80Hz arasındaki erkek alçak seslerin sessizleştirilmemesine izin verme
 - WebUI, sistem yereli diline göre dil değiştirme (şu anda en_US, ja_JP, zh_CN, zh_HK, zh_SG, zh_TW'yi destekliyor; desteklenmeyen durumda varsayılan olarak en_US'ye geçer)

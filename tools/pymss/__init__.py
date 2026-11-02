@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: __init__.py
+# Path: tools\pymss\__init__.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 """Public Python API for pymss.
 
 pymss provides model catalog helpers, model downloading, audio I/O, ensemble

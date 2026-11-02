@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+# ==============================================================================
+# File: multispeaker.py
+# Path: tools\multispeaker.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 2.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
+# Description: Multi-Speaker Dataset Manifest Builder and Validator (Thai & English)
+
 import hashlib
 import json
 import os
@@ -58,7 +69,7 @@ def _manifest_entry(path, speaker_name, speaker_id, repeat, index):
 def build_manifest_from_root(root):
     root = os.path.abspath(str(root or "").strip())
     if not os.path.isdir(root):
-        raise ManifestError("多说话人训练集总文件夹不存在：%s", root)
+        raise ManifestError("ไม่พบโฟลเดอร์หลักของชุดข้อมูลหลายผู้พูด (Multi-speaker root folder does not exist): %s", root)
     entries = []
     invalid = []
     names_by_id = {}
@@ -68,7 +79,7 @@ def build_manifest_from_root(root):
         if os.path.isdir(os.path.join(root, name))
     ]
     if not child_dirs:
-        raise ManifestError("多说话人训练集总文件夹中没有直接子文件夹")
+        raise ManifestError("ไม่พบโฟลเดอร์ย่อยในชุดข้อมูลหลายผู้พูด (No subdirectories found in multi-speaker root folder)")
     for child in child_dirs:
         name = os.path.basename(child)
         match = SPEAKER_DIR_RE.match(name)
@@ -107,11 +118,11 @@ def build_manifest_from_root(root):
             )
     if invalid:
         raise ManifestError(
-            "多说话人子文件夹无效（格式应为名称_ID_重复次数、ID为0~109、重复次数为正整数、同一ID的名称需一致且目录需有音频）：%s",
+            "โฟลเดอร์ย่อยหลายผู้พูดไม่ถูกต้อง (รูปแบบต้องเป็น ชื่อ_ID_รอบ เช่น Singer_0_1, ID 0~109, รอบ > 0): %s",
             ", ".join(invalid),
         )
     if not entries:
-        raise ManifestError("多说话人训练集总文件夹中没有有效音频")
+        raise ManifestError("ไม่พบไฟล์เสียงที่ใช้งานได้ในโฟลเดอร์หลายผู้พูด (No valid audio found in multi-speaker root folder)")
     return {
         "version": MANIFEST_VERSION,
         "source": "folder_scan",
@@ -182,7 +193,7 @@ def build_manifest_from_rows(rows, root=""):
                 )
             )
     if not entries:
-        raise ManifestError("没有有效的多说话人训练集行")
+        raise ManifestError("ไม่มีแถวข้อมูลชุดฝึกสอนหลายผู้พูดที่ถูกต้อง (No valid multi-speaker dataset rows)")
     manifest = {
         "version": MANIFEST_VERSION,
         "source": "helper",
@@ -209,12 +220,12 @@ def write_manifest(exp_dir, manifest):
 def load_manifest(exp_dir):
     path = os.path.join(exp_dir, "multispeaker_manifest.json")
     if not os.path.isfile(path):
-        raise ManifestError("多说话人训练集清单不存在，请先提交辅助清单或填写总文件夹")
+        raise ManifestError("ไม่พบรายการ Manifest ของชุดข้อมูลหลายผู้พูด (Multi-speaker manifest not found)")
     with open(path, "r", encoding="utf8") as file:
         manifest = json.load(file)
     entries = manifest.get("entries") if isinstance(manifest, dict) else None
     if not isinstance(entries, list) or not entries:
-        raise ManifestError("多说话人训练集清单没有有效音频")
+        raise ManifestError("รายการ Manifest ไม่มีไฟล์เสียงที่ถูกต้อง (No valid audio entries in multi-speaker manifest)")
     seen = set()
     names_by_id = {}
     for entry in entries:
@@ -225,7 +236,7 @@ def load_manifest(exp_dir):
             repeat = int(entry["repeat"])
             output_key = str(entry["output_key"])
         except (KeyError, TypeError, ValueError):
-            raise ManifestError("多说话人训练集清单格式错误")
+            raise ManifestError("รูปแบบรายการ Manifest ไม่ถูกต้อง (Malformed multi-speaker manifest format)")
         inconsistent = (
             speaker_id in names_by_id and names_by_id[speaker_id] != speaker_name
         )
@@ -241,9 +252,9 @@ def load_manifest(exp_dir):
             or not output_key
             or inconsistent
         ):
-            raise ManifestError("多说话人训练集清单包含无效条目：%s", path_value)
+            raise ManifestError("รายการ Manifest มีข้อมูลที่ไม่ถูกต้อง (Invalid entry in multi-speaker manifest): %s", path_value)
         if output_key in seen:
-            raise ManifestError("多说话人训练集清单存在重复输出标识：%s", output_key)
+            raise ManifestError("พบ Output Key ซ้ำซ้อนในรายการ Manifest (Duplicate output key in multi-speaker manifest): %s", output_key)
         seen.add(output_key)
         names_by_id[speaker_id] = speaker_name
     manifest["speakers"] = [

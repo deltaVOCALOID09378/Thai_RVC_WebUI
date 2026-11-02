@@ -1,36 +1,59 @@
 # -*- coding: utf-8 -*-
-"""CPU/multiprocess F0 extraction entry point."""
+# ==============================================================================
+# ชื่อไฟล์โค้ด (File Name)     : extract_f0_print.py
+# เวอร์ชั่นโค้ด (Version)      : 2.7 (Multi-Method Studio F0 Extractor)
+# ตำแหน่งจัดเก็บ (Location)   : infer/modules/train/extract/extract_f0_print.py
+# หน้าที่ (Function/Role)     : สคริปต์เริ่มต้นสำหรับสกัด F0 จำกัดเทรดอย่างเคร่งครัดที่ 1-2 เทรด 
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & Staff
+# ==============================================================================
 
+import os
 import sys
+
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
+
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+now_dir = os.getcwd()
+if now_dir not in sys.path:
+    sys.path.insert(0, now_dir)
 
 from infer.modules.train.extract.f0_extractor import run_extraction
 
 
 def main() -> int:
-    if len(sys.argv) != 4:
-        print(
-            "Usage: extract_f0_print.py <exp_dir> <workers> <f0_method>",
-            file=sys.stderr,
-        )
-        return 2
+    print(f"[INFO] เริ่มต้นระบบสกัดความถี่มูลฐาน (F0 Extraction) Args: {sys.argv}", flush=True)
+    exp_dir = sys.argv[1] if len(sys.argv) > 1 else "logs/default"
+    n_p = min(2, max(1, int(sys.argv[2]))) if len(sys.argv) > 2 else 1
+    f0method = sys.argv[3] if len(sys.argv) > 3 else "rmvpe"
 
-    exp_dir = sys.argv[1]
-    workers = int(sys.argv[2])
-    method = sys.argv[3]
+    device = "cpu"
+    is_half = False
+    try:
+        import torch
+        torch.set_num_threads(2)
+        if torch.cuda.is_available():
+            device = "cuda"
+            is_half = True
+    except Exception:
+        device = "cpu"
 
-    print(sys.argv, flush=True)
     return run_extraction(
         exp_dir=exp_dir,
-        method=method,
-        workers=workers,
-        device="cpu",
-        is_half=False,
+        method=f0method,
+        workers=n_p,
+        device=device,
+        is_half=is_half,
     )
 
 
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception as exc:
-        print(f"F0 extraction failed: {exc}", file=sys.stderr, flush=True)
-        raise SystemExit(1)
+    raise SystemExit(main())

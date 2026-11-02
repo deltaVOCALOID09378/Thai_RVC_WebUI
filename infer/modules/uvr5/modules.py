@@ -1,72 +1,106 @@
+# -*- coding: utf-8 -*-
 # ==============================================================================
-# Made And Checked By DELTA SYNTH & All Agentic AI
-# Original by RVC-Project
-# File: infer/modules/uvr5/modules.py | Version: 1.3
-# Description: [EN] UVR5 Vocal Separation Module / [TH] โมดูลแยกเสียงร้องและเสียงดนตรี
+# ชื่อไฟล์โค้ด (File Name)     : modules.py
+# เวอร์ชั่นโค้ด (Version)      : 1.2 (UVR5 Vocal/Instrument Separation & Automatic VRAM Cleanup)
+# ตำแหน่งจัดเก็บ (Location)   : infer/modules/uvr5/modules.py
+# หน้าที่ (Function/Role)     : แยกเสียงร้องและดนตรีประกอบด้วยโมเดล UVR5 / MDX-Net / De-Echo พร้อมคืนค่า VRAM
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & All Agentic AI
+#                             Original by Patiphat Wongyai (Delta) & RVC-Project
 # ==============================================================================
+
 import os
 import traceback
 import logging
-import gc
-from configs.config import Config
 
 logger = logging.getLogger(__name__)
+
+import ffmpeg
+import torch
+
+from configs.config import Config
+from infer.modules.uvr5.mdxnet import MDXNetDereverb
+from infer.modules.uvr5.preprocess import AudioPre, AudioPreDeEcho
+
 config = Config()
+
 
 def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format0):
     infos = []
     try:
-        inp_root = inp_root.strip(" ").strip('"').strip("\n")
-        save_root_vocal = save_root_vocal.strip(" ").strip('"').strip("\n")
-        save_root_ins = save_root_ins.strip(" ").strip('"').strip("\n")
-        is_hp3 = "HP3" in model_name
-        
+        inp_root = inp_root.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
+        save_root_vocal = (
+            save_root_vocal.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
+        )
+        save_root_ins = (
+            save_root_ins.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
+        )
         if model_name == "onnx_dereverb_By_FoxJoy":
-            from infer.modules.uvr5.mdxnet import MDXNetDereverb
             pre_fun = MDXNetDereverb(15, config.device)
         else:
-            from infer.modules.uvr5.preprocess import AudioPre, AudioPreDeEcho
             func = AudioPre if "DeEcho" not in model_name else AudioPreDeEcho
             pre_fun = func(
                 agg=int(agg),
                 model_path=os.path.join(
-                    os.getenv("weight_uvr5_root", "assets/uvr5_weights"), 
-                    model_name + ".pth"
+                    os.getenv("weight_uvr5_root"), model_name + ".pth"
                 ),
                 device=config.device,
                 is_half=config.is_half,
             )
-            
         if inp_root != "":
             paths = [os.path.join(inp_root, name) for name in os.listdir(inp_root)]
         else:
             paths = [path.name for path in paths]
-            
         for path in paths:
-            inp_path = os.path.join(inp_root, path) if inp_root != "" else path
-            if not os.path.isfile(inp_path):
-                continue
+            inp_path = os.path.join(inp_root, path)
+            need_reformat = 1
+            done = 0
             try:
-                # [ZERO-DEFECT FIX]: Handle Dereverb method signature mismatch dynamically
-                if model_name == "onnx_dereverb_By_FoxJoy":
-                    pre_fun.path_audio(inp_path, save_root_vocal, save_root_ins, format0)
-                else:
+                info = ffmpeg.probe(inp_path, cmd="ffprobe")
+                if (
+                    info["streams"][0]["channels"] == 2
+                    and info["streams"][0]["sample_rate"] == "44100"
+                ):
+                    need_reformat = 0
                     pre_fun._path_audio_(
-                        inp_path, save_root_ins, save_root_vocal, format0, is_hp3=is_hp3
+                        inp_path, save_root_ins, save_root_vocal, format0
                     )
-                success_msg = f"🟢 แยกเสียงสำเร็จ (Separation Successful): {os.path.basename(inp_path)}"
-                infos.append(success_msg)
-                logger.info(success_msg)
+                    done = 1
+            except:
+                need_reformat = 1
+                traceback.print_exc()
+            if need_reformat == 1:
+                tmp_path = "%s/%s.reformatted.wav" % (
+                    os.path.join(os.environ["TEMP"]),
+                    os.path.basename(inp_path),
+                )
+                os.system(
+                    "ffmpeg -i %s -vn -acodec pcm_s16le -ac 2 -ar 44100 %s -y"
+                    % (inp_path, tmp_path)
+                )
+                inp_path = tmp_path
+            try:
+                if done == 0:
+                    pre_fun.path_audio(
+                        inp_path, save_root_ins, save_root_vocal, format0
+                    )
+                infos.append("%s->Success" % (os.path.basename(inp_path)))
                 yield "\n".join(infos)
-            except Exception as e:
-                error_msg = f"🔴 เกิดข้อผิดพลาดกับไฟล์ (Error processing file) {os.path.basename(inp_path)}: {str(e)}"
-                infos.append(error_msg)
-                logger.error(error_msg)
-                yield "\n".join(infos)
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        logger.error(f"🔴 ข้อผิดพลาดร้ายแรง (Critical Error):\n{error_trace}")
-        yield f"🔴 เกิดข้อผิดพลาดระบบ (System Error):\n{error_trace}"
+            except:
+                try:
+                    if done == 0:
+                        pre_fun._path_audio_(
+                            inp_path, save_root_ins, save_root_vocal, format0
+                        )
+                    infos.append("%s->Success" % (os.path.basename(inp_path)))
+                    yield "\n".join(infos)
+                except:
+                    infos.append(
+                        "%s->%s" % (os.path.basename(inp_path), traceback.format_exc())
+                    )
+                    yield "\n".join(infos)
+    except:
+        infos.append(traceback.format_exc())
+        yield "\n".join(infos)
     finally:
         try:
             if model_name == "onnx_dereverb_By_FoxJoy":
@@ -75,13 +109,9 @@ def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format
             else:
                 del pre_fun.model
                 del pre_fun
-        except Exception:
-            pass
-        
-        import torch
-        gc.collect()
+        except:
+            traceback.print_exc()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-            torch.mps.empty_cache()
-        logger.info("✅ คืนค่าพื้นที่หน่วยความจำเรียบร้อยแล้ว (Memory Cleared Successfully)")
+            logger.info("Executed torch.cuda.empty_cache()")
+    yield "\n".join(infos)

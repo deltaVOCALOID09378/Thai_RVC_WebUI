@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: nets_new.py
+# Path: tools\pymss_core\modules\vocal_remover\uvr_lib_v5\vr_network\nets_new.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import torch
 from torch import nn
 import torch.nn.functional as F

@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: __init__.py
+# Path: tools\pymss_core\__init__.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 """Core model, configuration, and checkpoint API for music source separation.
 
 `pymss_core` contains the shared pieces used by higher-level packages:

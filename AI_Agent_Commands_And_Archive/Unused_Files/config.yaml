@@ -1,0 +1,157 @@
+!!python/object/apply:collections.OrderedDict
+- - - base_config
+    - - configs/acoustic.yaml
+  - - dictionaries
+    - Custom-Language: data/Kochujang/custom_dictionary.txt
+  - - extra_phonemes
+    - []
+  - - merged_phoneme_groups
+    - []
+  - - datasets
+    - - raw_data_dir: data/Kochujang/raw
+        speaker: main
+        spk_id: 0
+        language: Custom-Language
+        test_prefixes:
+        - EN01
+  - - binary_data_dir
+    - data/Kochujang/binary
+  - - binarization_args
+    - num_workers: 2
+      shuffle: true
+  - - pe
+    - rmvpe
+  - - pe_ckpt
+    - checkpoints/rmvpe/model.pt
+  - - hnsep
+    - vr
+  - - hnsep_ckpt
+    - checkpoints/vr/model.pt
+  - - vocoder
+    - NsfHifiGAN
+  - - vocoder_ckpt
+    - checkpoints/nsf_hifigan/model.ckpt
+  - - use_lang_id
+    - false
+  - - num_lang
+    - 1
+  - - use_spk_id
+    - false
+  - - num_spk
+    - 1
+  - - use_energy_embed
+    - false
+  - - use_breathiness_embed
+    - false
+  - - use_voicing_embed
+    - false
+  - - use_tension_embed
+    - false
+  - - use_key_shift_embed
+    - true
+  - - use_speed_embed
+    - true
+  - - augmentation_args
+    - random_pitch_shifting:
+        enabled: true
+        range:
+        - -5.0
+        - 5.0
+        scale: 0.75
+      fixed_pitch_shifting:
+        enabled: false
+        targets:
+        - -5.0
+        - 5.0
+        scale: 0.5
+      random_time_stretching:
+        enabled: true
+        range:
+        - 0.5
+        - 2.0
+        scale: 0.75
+  - - diffusion_type
+    - reflow
+  - - enc_ffn_kernel_size
+    - 3
+  - - use_rope
+    - true
+  - - use_shallow_diffusion
+    - true
+  - - T_start
+    - 0.4
+  - - T_start_infer
+    - 0.4
+  - - K_step
+    - 300
+  - - K_step_infer
+    - 300
+  - - backbone_type
+    - lynxnet
+  - - backbone_args
+    - num_channels: 1024
+      num_layers: 6
+      kernel_size: 31
+      dropout_rate: 0.0
+      strong_cond: true
+  - - shallow_diffusion_args
+    - train_aux_decoder: true
+      train_diffusion: true
+      val_gt_start: false
+      aux_decoder_arch: convnext
+      aux_decoder_args:
+        num_channels: 512
+        num_layers: 6
+        kernel_size: 7
+        dropout_rate: 0.1
+      aux_decoder_grad: 0.1
+  - - lambda_aux_mel_loss
+    - 0.2
+  - - optimizer_args
+    - lr: 0.0006
+  - - lr_scheduler_args
+    - scheduler_cls: torch.optim.lr_scheduler.StepLR
+      step_size: 10000
+      gamma: 0.75
+  - - max_batch_frames
+    - 16000
+  - - max_batch_size
+    - 8
+  - - max_updates
+    - 160000
+  - - num_valid_plots
+    - 10
+  - - val_with_vocoder
+    - true
+  - - val_check_interval
+    - 2000
+  - - num_ckpt_keep
+    - 5
+  - - permanent_ckpt_start
+    - 80000
+  - - permanent_ckpt_interval
+    - 20000
+  - - pl_trainer_devices
+    - auto
+  - - pl_trainer_accelerator
+    - cpu
+  - - pl_trainer_precision
+    - '32'
+  - - pl_trainer_strategy
+    - name: auto
+      process_group_backend: gloo
+      find_unused_parameters: false
+  - - finetune_enabled
+    - false
+  - - finetune_ckpt_path
+    - null
+  - - finetune_ignored_params
+    - - model.fs2.encoder.embed_tokens
+      - model.fs2.txt_embed
+      - model.fs2.spk_embed
+  - - finetune_strict_shapes
+    - true
+  - - freezing_enabled
+    - false
+  - - frozen_params
+    - []

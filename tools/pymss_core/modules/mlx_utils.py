@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: mlx_utils.py
+# Path: tools\pymss_core\modules\mlx_utils.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 def mlx_periodic_hann_window(length, dtype):
     import mlx.core as mx
 

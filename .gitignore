@@ -1,43 +1,137 @@
 # ==============================================================================
-# Date: 11/10/2026 (B.E. 2569) | 11 October 2026
-# File: .gitignore | Version: 2.0
+# Date: 25/10/2026 (B.E. 2569) | 25 October 2026
+# File: .gitignore | Version: 2.2 (Zero-Junk Edition)
 # Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
 # Original by Patiphat Wongyai (Delta) & RVC Project
+# Description: Comprehensive ignore list covering OS junk, caches, and temp files.
 # ==============================================================================
 
-# OS & System Junk
-infer/lib/uvr5_pack/__pycache__
-infer/lib/infer_pack/__pycache__
-infer/lib/train/__pycache__
-infer/lib/jit/__pycache__
-/__pycache__/
-.DS_Store
-Thumbs.db
-ehthumbs.db
-desktop.ini
+# ------------------------------------------------------------------------------
+# 1. OS & System Junk (ไฟล์ขยะจากระบบปฏิบัติการ)
+# ------------------------------------------------------------------------------
+[Dd]esktop.ini
+*/[Dd]esktop.ini
+[Tt]humbs.db
+*/[Tt]humbs.db
+ehthumbs*.db
 folder.htt
 $RECYCLE.BIN/
+.DS_Store
+*/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+*.tmp
+*.~tmp
+*.~*
+*.crdownload
+*.part
 
-# Python Cache & Bytecode
+# ------------------------------------------------------------------------------
+# 2. Cloud Sync Artifacts (ไฟล์ขยะจากการซิงค์คลาวด์)
+# ------------------------------------------------------------------------------
+.tmp.driveupload/
+*.tmp.driveupload/
+*.tmp.driveupload
+.tmp.drivedownload/
+*.tmp.drivedownload/
+*.tmp.drivedownload
+Sync_GitHub.log
+*.log
+
+# ------------------------------------------------------------------------------
+# 3. Python Cache & Bytecode (ไฟล์แคชของไพธอน)
+# ------------------------------------------------------------------------------
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.pyd
 *.pyc
 
-# Virtual Environments & Embedded Runtime
+# ------------------------------------------------------------------------------
+# 4. Python Virtual Environments & Embedded Runtime (สภาพแวดล้อมจำลอง)
+# ------------------------------------------------------------------------------
 .venv/
 venv/
 /runtime/
 _local_env/
+ENV/
+env/
 
-# Temporary Directories & Caches
+# ------------------------------------------------------------------------------
+# 5. Python Testing, Linting & Build Artifacts (ไฟล์จากการทดสอบและบิลด์)
+# ------------------------------------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+eggs/
+.eggs/
+
+# ------------------------------------------------------------------------------
+# 6. IDE & Editor Working Configurations (ไฟล์ตั้งค่าโปรแกรมเขียนโค้ด)
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+.vs/
+*.user
+*.suo
+
+# ------------------------------------------------------------------------------
+# 7. AI Agent Working Caches & Session Metadata (แคชของ AI Agents)
+# ------------------------------------------------------------------------------
+.claude/
+.freebuff/
+.hermes/
+.gemini/
+.cursor/
+
+# ------------------------------------------------------------------------------
+# 8. Temporary Directories & Caches (โฟลเดอร์ชั่วคราวและแคชการประมวลผล)
+# ------------------------------------------------------------------------------
 /TEMP/
 /opt/
 tools/aria2c/
 tools/flag.txt
 
-# Training Logs & Generated Weights
+# ------------------------------------------------------------------------------
+# 9. Audio Output & Render Dumps (ไฟล์เสียงส่งออกชั่วคราว)
+# ------------------------------------------------------------------------------
+/Output/
+/output/
+/temp_audio/
+/test_output/
+*.wav.tmp
+*.mp3.tmp
+
+# ------------------------------------------------------------------------------
+# 10. DiffSinger & Training Datasets / Intermediate Caches (ข้อมูลฝึกสอน)
+# ------------------------------------------------------------------------------
+/data/
+DiffSinger_Training/
+For OpenUtau VB Making/
+DB - Converter Portable/
+Backup File/
+Chat History/
+/checkpoints/
+*.npy.tmp
+*.pt.tmp
+*.ckpt.tmp
+
+# ------------------------------------------------------------------------------
+# 11. Training Logs & Generated Weights (บันทึกการฝึกและน้ำหนักโมเดล)
+# ------------------------------------------------------------------------------
 /logs/*
 !/logs/mute/
 /weights/*
@@ -45,31 +139,62 @@ tools/flag.txt
 !/assets/weights/.gitkeep
 /assets/indices/*
 !/assets/indices/.gitkeep
-/__pycache__/*
+/assets/uvr5_weights/*
+!/assets/uvr5_weights/.gitkeep
+/assets/pretrained/*
+!/assets/pretrained/.gitkeep
+/assets/pretrained_v2/*
+!/assets/pretrained_v2/.gitkeep
+/assets/rmvpe/*
+!/assets/rmvpe/.gitkeep
+/assets/hubert/*
+!/assets/hubert/.gitkeep
+*.pth
+*.onnx
+*.index
 
-# Archives & Temporary Packages
+# ------------------------------------------------------------------------------
+# 12. Archives & Temporary Packages (ไฟล์บีบอัดชั่วคราว)
+# ------------------------------------------------------------------------------
 *.zip
 *.tar
 *.gz
 *.7z
 
-# RVC Legacy Documents
+# ------------------------------------------------------------------------------
+# 13. Text Files & Logs (ไฟล์บันทึกข้อความ)
+# ------------------------------------------------------------------------------
+*.log
+!requirements*.txt
+!*requirements*.txt
+!filelist.txt
+
+# ------------------------------------------------------------------------------
+# 14. RVC Legacy Documents & Environment Locks (เอกสารเก่าและสคริปต์ล็อก)
+# ------------------------------------------------------------------------------
 /All Documents/
 .tool-versions
 
-# C# & .NET Build Output & IDE Artifacts
+# ------------------------------------------------------------------------------
+# 15. C# & .NET Build Output & IDE Artifacts
+# ------------------------------------------------------------------------------
 ThaiRVCStudio/bin/
 ThaiRVCStudio/obj/
 **/bin/
 **/obj/
-.vs/
-*.user
-*.suo
 
-# Large Third-Party Binaries & Upstream Raw Folders
+# ------------------------------------------------------------------------------
+# 16. Backup & Scratch Files (ไฟล์สำรองข้อมูล)
+# ------------------------------------------------------------------------------
+*.bak
+*.backup
+*.orig
+*~
+Program_Backup.py
+
+# ------------------------------------------------------------------------------
+# 17. Large Third-Party Binaries & Upstream Raw Folders (ไบนารีและโปรแกรมภายนอก)
+# ------------------------------------------------------------------------------
 ffmpeg.exe
 ffprobe.exe
 Retrieval-based-Voice-Conversion-WebUI-2.2.231006/
-DiffSinger_Training/checkpoints/
-DiffSinger_Training/pretrain/
-DiffSinger_Training/data/

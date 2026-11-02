@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1637.4966666666664 792.5999999999999" width="1637.4966666666664" height="792.5999999999999" style="--bg:#18181B;--fg:#F4F4F5;--line:#71717A;--muted:#A1A1AA;--surface:#27272A;--border:#3F3F46;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="UI_Layer" data-label="1. ชั้นส่วนต่อประสาน (Presentation Layer — A11y Optimized)">
+  <rect x="437.60866666666675" y="40" width="926.6919999999998" height="130.7" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="437.60866666666675" y="40" width="926.6919999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="449.60866666666675" y="54" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">1. ชั้นส่วนต่อประสาน (Presentation Layer — A11y Optimized)</text>
+</g>
+<g class="subgraph" data-id="DT_Modules" data-label="2. โมดูลส่วนกลาง DELTA SYNTH (dt_modules/)">
+  <rect x="40" y="224.7" width="1511.4879999999998" height="130.7" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="224.7" width="1511.4879999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="52" y="238.7" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">2. โมดูลส่วนกลาง DELTA SYNTH (dt_modules/)</text>
+</g>
+<g class="subgraph" data-id="Core_Engine" data-label="3. เครื่องยนต์หลัก DiffSinger AI (DiffSinger/ &amp; Root)">
+  <rect x="62.52600000000007" y="403.4" width="1466.4359999999997" height="113.80000000000001" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="62.52600000000007" y="403.4" width="1466.4359999999997" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="74.52600000000007" y="417.4" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">3. เครื่องยนต์หลัก DiffSinger AI (DiffSinger/ &amp; Root)</text>
+</g>
+<g class="subgraph" data-id="Assets_Data" data-label="4. ทรัพยากรและคลังเสียง (Assets, Pretrained Checkpoints &amp; Dictionaries)">
+  <rect x="551.94375" y="571.2" width="862.9659999999999" height="181.4" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="551.94375" y="571.2" width="862.9659999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="563.94375" y="585.2" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">4. ทรัพยากรและคลังเสียง (Assets, Pretrained Checkpoints &amp; Dictionaries)</text>
+</g>
+<polyline class="edge" data-from="DT_Modules" data-to="Core_Engine" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="795.7439999999999,355.4 795.7439999999999,403.4" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="GUI" data-to="DT_Modules" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="902.3609999999999,154.7 902.3609999999999,212.7 795.7439999999999,212.7 795.7439999999999,224.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="WEB" data-to="DT_Modules" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1173.616,154.7 1173.616,224.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CLI" data-to="DT_Modules" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="625.0066666666667,154.7 625.0066666666667,212.7 417.87199999999996,212.7 417.87199999999996,224.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Core_Engine" data-to="CKPT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="551.338,517.2 551.338,553.2 743.41725,553.2 743.41725,615.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Core_Engine" data-to="DICTS" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1040.1499999999999,517.2 1040.1499999999999,553.2 1070.4942499999997,553.2 1070.49425,615.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="GUI" data-to="STRINGS" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="941.3391666666665,154.7 941.3391666666665,384.95000000000005 1310.5037499999999,384.95000000000005 1310.5037499999999,615.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="WEB" data-to="STRINGS" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1217.2871666666667,154.7 1217.2871666666667,384.95000000000005 1310.5037499999999,384.95000000000005 1310.5037499999999,615.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="node" data-id="GUI" data-label="🖥️ DiffTrainer Desktop GUI
+(difftrainer.py / CustomTkinter)
+Leelawadee UI / #CC2200 Theme" data-shape="rectangle">
+  <rect x="824.4046666666666" y="84" width="233.869" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="941.3391666666665" y="119.35" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="941.3391666666665" dy="-12.350000000000001">🖥️ DiffTrainer Desktop GUI</tspan><tspan x="941.3391666666665" dy="16.900000000000002">(difftrainer.py / CustomTkinter)</tspan><tspan x="941.3391666666665" dy="16.900000000000002">Leelawadee UI / #CC2200 Theme</tspan></text>
+</g>
+<g class="node" data-id="WEB" data-label="🌐 DiffSinger WebUI
+(app.py / Gradio Interface)
+VRAM Guard / Corporate Dark Theme" data-shape="rectangle">
+  <rect x="1086.2736666666667" y="84" width="262.02699999999993" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1217.2871666666667" y="119.35" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1217.2871666666667" dy="-12.350000000000001">🌐 DiffSinger WebUI</tspan><tspan x="1217.2871666666667" dy="16.900000000000002">(app.py / Gradio Interface)</tspan><tspan x="1217.2871666666667" dy="16.900000000000002">VRAM Guard / Corporate Dark Theme</tspan></text>
+</g>
+<g class="node" data-id="CLI" data-label="⚡ CLI &amp; Batch Automation
+(run_pipeline.bat / auto_pipeline.py
+Run_AutoDsDict.bat / Run_DiffSinger_Optimizer.bat)" data-shape="rectangle">
+  <rect x="453.60866666666675" y="84" width="342.7959999999999" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="625.0066666666667" y="119.35" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="625.0066666666667" dy="-12.350000000000001">⚡ CLI &amp; Batch Automation</tspan><tspan x="625.0066666666667" dy="16.900000000000002">(run_pipeline.bat / auto_pipeline.py</tspan><tspan x="625.0066666666667" dy="16.900000000000002">Run_AutoDsDict.bat / Run_DiffSinger_Optimizer.bat)</tspan></text>
+</g>
+<g class="node" data-id="ADV" data-label="advexport.py (v1.1)
+Advanced OpenUtau VB Exporter
+Auto Thai character.yaml" data-shape="rectangle">
+  <rect x="302.308" y="272.92499999999995" width="238.31499999999994" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="421.46549999999996" y="308.275" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="421.46549999999996" dy="-12.350000000000001">advexport.py (v1.1)</tspan><tspan x="421.46549999999996" dy="16.900000000000002">Advanced OpenUtau VB Exporter</tspan><tspan x="421.46549999999996" dy="16.900000000000002">Auto Thai character.yaml</tspan></text>
+</g>
+<g class="node" data-id="DICT" data-label="autodsdict.py (v1.1)
+Thai &amp; Multilingual dsdict.yaml Generator" data-shape="rectangle">
+  <rect x="797.8879999999999" y="272.92499999999995" width="276.847" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="936.3114999999999" y="299.82499999999993" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="936.3114999999999" dy="-3.9000000000000012">autodsdict.py (v1.1)</tspan><tspan x="936.3114999999999" dy="16.900000000000002">Thai &amp; Multilingual dsdict.yaml Generator</tspan></text>
+</g>
+<g class="node" data-id="BASIC" data-label="basicexport.py (v1.1)
+Standard Voicebank Exporter" data-shape="rectangle">
+  <rect x="56" y="272.92499999999995" width="218.30799999999996" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="165.154" y="299.82499999999993" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="165.154" dy="-3.9000000000000012">basicexport.py (v1.1)</tspan><tspan x="165.154" dy="16.900000000000002">Standard Voicebank Exporter</tspan></text>
+</g>
+<g class="node" data-id="CSV2" data-label="csv2ds.py (v1.1)
+CSV to .ds with Pitch &amp; Vibrato" data-shape="rectangle">
+  <rect x="1102.735" y="272.92499999999995" width="212.37999999999997" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1208.925" y="299.82499999999993" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1208.925" dy="-3.9000000000000012">csv2ds.py (v1.1)</tspan><tspan x="1208.925" dy="16.900000000000002">CSV to .ds with Pitch &amp; Vibrato</tspan></text>
+</g>
+<g class="node" data-id="SEG" data-label="corpus_segmenter.py
+Audio &amp; Lab Segmentation" data-shape="rectangle">
+  <rect x="1343.1149999999998" y="272.92499999999995" width="192.37299999999993" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1439.3014999999998" y="299.82499999999993" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1439.3014999999998" dy="-3.9000000000000012">corpus_segmenter.py</tspan><tspan x="1439.3014999999998" dy="16.900000000000002">Audio &amp; Lab Segmentation</tspan></text>
+</g>
+<g class="node" data-id="ONNX" data-label="onnxexport.py
+PyTorch to ONNX Exporter" data-shape="rectangle">
+  <rect x="568.6229999999998" y="272.92499999999995" width="201.265" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="669.2554999999998" y="299.82499999999993" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="669.2554999999998" dy="-3.9000000000000012">onnxexport.py</tspan><tspan x="669.2554999999998" dy="16.900000000000002">PyTorch to ONNX Exporter</tspan></text>
+</g>
+<g class="node" data-id="PRE" data-label="Preprocessing
+(binarize.py, acoustic/variance binarizer)" data-shape="rectangle">
+  <rect x="470.8109999999999" y="447.4" width="285.7389999999999" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="613.6804999999999" y="474.29999999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="613.6804999999999" dy="-3.9000000000000012">Preprocessing</tspan><tspan x="613.6804999999999" dy="16.900000000000002">(binarize.py, acoustic/variance binarizer)</tspan></text>
+</g>
+<g class="node" data-id="TRAIN" data-label="Training Engine
+(PyTorch Lightning, acoustic_task, variance_task)" data-shape="rectangle">
+  <rect x="784.55" y="447.4" width="339.09099999999995" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="954.0954999999999" y="474.29999999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="954.0954999999999" dy="-3.9000000000000012">Training Engine</tspan><tspan x="954.0954999999999" dy="16.900000000000002">(PyTorch Lightning, acoustic_task, variance_task)</tspan></text>
+</g>
+<g class="node" data-id="INFER" data-label="Inference Engine
+(infer.py, ds_acoustic, ds_variance, quickinference.py)" data-shape="rectangle">
+  <rect x="78.52600000000007" y="447.4" width="364.2849999999999" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="260.6685" y="474.29999999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="260.6685" dy="-3.9000000000000012">Inference Engine</tspan><tspan x="260.6685" dy="16.900000000000002">(infer.py, ds_acoustic, ds_variance, quickinference.py)</tspan></text>
+</g>
+<g class="node" data-id="ENH" data-label="Enhancer &amp; Optimizer
+(diffsinger_enhancer.py, diffsinger_suite_optimizer.py)" data-shape="rectangle">
+  <rect x="1151.6409999999998" y="447.4" width="361.3209999999998" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1332.3014999999998" y="474.29999999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1332.3014999999998" dy="-3.9000000000000012">Enhancer &amp; Optimizer</tspan><tspan x="1332.3014999999998" dy="16.900000000000002">(diffsinger_enhancer.py, diffsinger_suite_optimizer.py)</tspan></text>
+</g>
+<g class="node" data-id="CKPT" data-label="Checkpoints
+• RMVPE (Pitch Extractor)
+• NSF-HiFiGAN / PC-NSF-HiFiGAN (44.1kHz Vocoder)
+• SOME Continuous 256 Estimator" data-shape="rectangle">
+  <rect x="567.94375" y="615.2" width="350.9469999999999" height="87.60000000000001" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="743.41725" y="659" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="743.41725" dy="-20.8">Checkpoints</tspan><tspan x="743.41725" dy="16.900000000000002">• RMVPE (Pitch Extractor)</tspan><tspan x="743.41725" dy="16.900000000000002">• NSF-HiFiGAN / PC-NSF-HiFiGAN (44.1kHz Vocoder)</tspan><tspan x="743.41725" dy="16.900000000000002">• SOME Continuous 256 Estimator</tspan></text>
+</g>
+<g class="node" data-id="DICTS" data-label="Dictionaries
+• thai_dict.txt (Thai Phonemes)
+• opencpop-extension.txt (Chinese)
+• arpasing_dict.txt (English)
+• japanese_dict.txt (Japanese)
+• langloader.yaml &amp; merge_list.yaml" data-shape="rectangle">
+  <rect x="946.8907499999999" y="615.2" width="247.20699999999997" height="121.4" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1070.49425" y="675.9000000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1070.49425" dy="-37.70000000000001">Dictionaries</tspan><tspan x="1070.49425" dy="16.900000000000002">• thai_dict.txt (Thai Phonemes)</tspan><tspan x="1070.49425" dy="16.900000000000002">• opencpop-extension.txt (Chinese)</tspan><tspan x="1070.49425" dy="16.900000000000002">• arpasing_dict.txt (English)</tspan><tspan x="1070.49425" dy="16.900000000000002">• japanese_dict.txt (Japanese)</tspan><tspan x="1070.49425" dy="16.900000000000002">• langloader.yaml &amp; merge_list.yaml</tspan></text>
+</g>
+<g class="node" data-id="STRINGS" data-label="Strings (Multilingual)
+• TH-th.yaml (Thai)
+• en_US.yaml (English)
+• de_DE.yaml (German)" data-shape="rectangle">
+  <rect x="1222.09775" y="615.2" width="176.81199999999998" height="87.60000000000001" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1310.5037499999999" y="659" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1310.5037499999999" dy="-20.8">Strings (Multilingual)</tspan><tspan x="1310.5037499999999" dy="16.900000000000002">• TH-th.yaml (Thai)</tspan><tspan x="1310.5037499999999" dy="16.900000000000002">• en_US.yaml (English)</tspan><tspan x="1310.5037499999999" dy="16.900000000000002">• de_DE.yaml (German)</tspan></text>
+</g>
+</svg>

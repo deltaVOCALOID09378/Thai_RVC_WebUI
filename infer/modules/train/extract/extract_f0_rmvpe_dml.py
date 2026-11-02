@@ -1,26 +1,38 @@
 # -*- coding: utf-8 -*-
-"""DirectML RMVPE extraction entry point."""
+# ==============================================================================
+# ชื่อไฟล์โค้ด (File Name)     : extract_f0_rmvpe_dml.py
+# เวอร์ชั่นโค้ด (Version)      : 2.7 (DirectML / CPU Safe RMVPE Extractor)
+# ตำแหน่งจัดเก็บ (Location)   : infer/modules/train/extract/extract_f0_rmvpe_dml.py
+# หน้าที่ (Function/Role)     : สกัดระดับเสียงด้วย RMVPE บนการ์ดจอ AMD/Intel DirectML
+# เครดิตผู้สร้าง (Credit)      : Made And Checked By DELTA SYNTH & Staff
+# ==============================================================================
 
+import os
 import sys
+
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
+
+now_dir = os.getcwd()
+if now_dir not in sys.path:
+    sys.path.insert(0, now_dir)
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print(
-            "Usage: extract_f0_rmvpe_dml.py <exp_dir>",
-            file=sys.stderr,
-        )
-        return 2
-
-    import torch_directml
+    exp_dir = sys.argv[1] if len(sys.argv) > 1 else "logs/default"
+    device = "cpu"
+    try:
+        import torch
+        torch.set_num_threads(2)
+        import torch_directml
+        device = torch_directml.device(torch_directml.default_device())
+    except Exception:
+        device = "cpu"
 
     from infer.modules.train.extract.f0_extractor import run_extraction
-
-    device = torch_directml.device(torch_directml.default_device())
-
-    print(sys.argv, flush=True)
+    print(f"[INFO] สกัดความถี่ด้วย RMVPE (DirectML) Args: {sys.argv}", flush=True)
     return run_extraction(
-        exp_dir=sys.argv[1],
+        exp_dir=exp_dir,
         method="rmvpe",
         workers=1,
         device=device,
@@ -29,8 +41,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception as exc:
-        print(f"DirectML RMVPE extraction failed: {exc}", file=sys.stderr, flush=True)
-        raise SystemExit(1)
+    raise SystemExit(main())

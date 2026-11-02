@@ -1,11 +1,13 @@
 # ==============================================================================
-# File: F0Predictor.py
-# Path: upstream_clean_reference\Retrieval-based-Voice-Conversion-WebUI-2.2.231006\infer\lib\infer_pack\modules\F0Predictor\F0Predictor.py
-# Description: RVC WebUI Core Module / โมดูลหลัก RVC WebUI
-# Version: 1.0
-# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
-# [ Original by "RVC-Project" ]
+# 1. วัน/เดือน/ปี (Date)       : 30/10/2569 (30 October 2026)
+# 2. ชื่อไฟล์ที่ทำ (File Name)   : F0Predictor.py
+# 3. ลำดับเวอร์ชั่นของไฟล์ (Version): 1.2
+# 4. เครดิตผู้สร้าง (Credit)    : Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+#                              [ Original by "RVC-Project" ]
+# 5. ตำแหน่งที่วางของไฟล์ (Path) : infer/lib/infer_pack/modules/F0Predictor/F0Predictor.py
+# 6. รายละเอียดการแก้ไขงาน    : ปรับสมดุลโครงสร้างคลาสพื้นฐาน (Base Class) และจัดระเบียบ Docstring
 # ==============================================================================
+
 class F0Predictor(object):
     def compute_f0(self, wav, p_len):
         """

@@ -169,11 +169,21 @@ def run_stage_autoclean(
     audio_files = []
     for ext in ("*.wav", "*.flac", "*.mp3", "*.ogg"):
         audio_files.extend(list(d_path.glob(ext)))
+        audio_files.extend(list((d_path / "wavs").glob(ext)))
         audio_files.extend(list((d_path / "raw" / "wavs").glob(ext)))
+        audio_files.extend(list(d_path.rglob(ext)))
 
-    # Deduplicate paths
-    audio_files = sorted(list(set(audio_files)))
+    # Deduplicate paths and exclude quarantine folder
+    audio_files = sorted(list(set([
+        af for af in audio_files if "quarantine" not in af.parts
+    ])))
     total_files = len(audio_files)
+
+    if total_files == 0:
+        log_warn(f"ไม่พบไฟล์เสียงในโฟลเดอร์: {d_path}")
+        print("💡 [คำแนะนำ] กรุณาตรวจสอบว่ามีไฟล์เสียง (.wav, .flac, .mp3, .ogg) ในโฟลเดอร์ดังกล่าวหรือโฟลเดอร์ย่อย เช่น 'wavs/' หรือ 'raw/wavs/'")
+        return {"status": "FAILED", "reason": "No audio files found"}
+
     print(f"[*] พบไฟล์เสียงสำหรับตรวจสอบและทำความสะอาด: {total_files} ไฟล์")
 
     pass_count = 0
@@ -399,6 +409,14 @@ def run_stage_export(
     target_out = pathlib.Path(out_dir).resolve() if out_dir else (ds_dir / "checkpoints" / exp_name / "onnx")
     target_out.mkdir(parents=True, exist_ok=True)
 
+    ckpt_dir = ds_dir / "checkpoints" / exp_name
+    ckpt_files = list(ckpt_dir.glob("*.ckpt")) + list(ckpt_dir.glob("**/*.ckpt")) if ckpt_dir.exists() else []
+    if not ckpt_files:
+        log_warn(f"ยังไม่พบไฟล์ Checkpoint (.ckpt) สำหรับโครงการ '{exp_name}' ใน {ckpt_dir}")
+        print(f"💡 [คำแนะนำ] กรุณาฝึกสอนโมเดล (ขั้นตอนที่ 4: ฝึกสอนโมเดล) เพื่อสร้างไฟล์ Checkpoint ก่อนส่งออกเป็น ONNX")
+        print(f"    เมื่อโมเดลฝึกสอนเสร็จสิ้นและมี Checkpoint จึงจะสามารถส่งออก ONNX ได้อย่างถูกต้อง")
+        return 1
+
     cmd = [PYTHON_EXE, str(export_script), export_type.lower(), "--exp", exp_name.strip(), "--out", str(target_out)]
     print(f"[*] คำสั่งส่งออก ONNX: {' '.join(cmd)}")
     print(f"[*] โฟลเดอร์ปลายทาง: {target_out}\n")
@@ -606,9 +624,11 @@ def main():
         sys.exit(0)
 
     if args.command == "autoclean":
-        run_stage_autoclean(args.dataset, args.out)
+        res = run_stage_autoclean(args.dataset, args.out)
+        sys.exit(0 if res.get("status") == "SUCCESS" else 1)
     elif args.command == "dict":
-        run_stage_dictionary(args.dataset, args.dict_out, args.phone_out)
+        res = run_stage_dictionary(args.dataset, args.dict_out, args.phone_out)
+        sys.exit(0 if res.get("status") == "SUCCESS" else 1)
     elif args.command == "binarize":
         sys.exit(run_stage_binarize(args.config))
     elif args.command == "train":
@@ -616,7 +636,8 @@ def main():
     elif args.command == "export":
         sys.exit(run_stage_export(args.exp_name, args.type, args.out))
     elif args.command == "package":
-        run_stage_package_openutau(args.exp_name, args.out, args.name)
+        res = run_stage_package_openutau(args.exp_name, args.out, args.name)
+        sys.exit(0 if res.get("status") == "SUCCESS" else 1)
     elif args.command == "pipeline":
         sys.exit(run_master_pipeline(args.dataset, args.exp_name, args.out, args.acoustic_cfg, args.variance_cfg))
 

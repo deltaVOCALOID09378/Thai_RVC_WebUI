@@ -1,9 +1,18 @@
-"""RVC inference worker for the RVC Realtime VST2/VST3 plugin."""
+# ==============================================================================
+# File Name: rvc_worker.py
+# Version: 1.4
+# Target Path: Thai_RVC_WebUI_v1\RVCRealtimeVST\worker\rvc_worker.py
+# Role: RVC & DiffSinger AI Realtime Inference Worker Bridge / โมดูลตัวขับเคลื่อนการแปลงเสียงเรียลไทม์สำหรับปลั๊กอิน VST2/VST3
+# Credits: Made And Checked By DELTA SYNTH & All Agentic AI
+# Original by RVC-Project & Patiphat Wongyai (Delta)
+# ==============================================================================
+"""RVC and DiffSinger AI inference worker for the RVC Realtime VST2/VST3 plugin."""
 
 from __future__ import annotations
 
 import argparse
 import ctypes
+import gc
 import json
 import mmap
 import os
@@ -11,7 +20,11 @@ import struct
 import sys
 import time
 import traceback
+import warnings
 from pathlib import Path
+
+# ระงับคำเตือนทั้งหมดเพื่อให้เธรดประมวลผลเสียงทำงานได้อย่างสะอาดและปราศจากสิ่งรบกวน
+warnings.filterwarnings("ignore")
 
 MAGIC = 0x50564352
 PROTOCOL_VERSION = 1
@@ -33,6 +46,18 @@ SYNCHRONIZE = 0x00100000
 EVENT_MODIFY_STATE = 0x0002
 WAIT_OBJECT_0 = 0
 WAIT_TIMEOUT = 258
+
+
+def clear_vram_safe() -> None:
+    """คืนค่าหน่วยความจำการ์ดจอและระบบอย่างปลอดภัย / Safely clear GPU VRAM and system garbage."""
+    gc.collect()
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+    except Exception:
+        pass
 
 
 def write_value(shared: mmap.mmap, offset: int, fmt: str, value) -> None:
@@ -86,7 +111,8 @@ class RVCStreamEngine:
     def __init__(self, cfg: dict):
         self.root = Path(cfg["rvc_root"]).resolve()
         os.chdir(self.root)
-        sys.path.insert(0, str(self.root))
+        if str(self.root) not in sys.path:
+            sys.path.insert(0, str(self.root))
         os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
         os.environ.setdefault("OMP_NUM_THREADS", "4")
 
@@ -107,20 +133,20 @@ class RVCStreamEngine:
         self.tat = tat
         self.run_cuda_graph = run_cuda_graph
 
-        self.sample_rate = int(cfg["sample_rate"])
-        self.block_ms = float(cfg["block_ms"])
-        self.crossfade_ms = float(cfg["crossfade_ms"])
-        self.extra_ms = float(cfg["extra_ms"])
+        self.sample_rate = max(8000, int(cfg["sample_rate"]))
+        self.block_ms = max(20.0, float(cfg["block_ms"]))
+        self.crossfade_ms = max(10.0, float(cfg["crossfade_ms"]))
+        self.extra_ms = max(100.0, float(cfg["extra_ms"]))
         self.zc = max(1, self.sample_rate // 100)
-        self.block_frame = int(round(self.block_ms / 1000 * self.sample_rate / self.zc) * self.zc)
+        self.block_frame = max(self.zc, int(round(self.block_ms / 1000.0 * self.sample_rate / self.zc) * self.zc))
         self.block_frame_16k = 160 * self.block_frame // self.zc
-        self.crossfade_frame = int(round(self.crossfade_ms / 1000 * self.sample_rate / self.zc) * self.zc)
-        # Match the source realtime GUI: SOLA overlap is capped at 40 ms and
-        # remains independent of the audio callback block length.
-        self.sola_buffer_frame = min(self.crossfade_frame, 4 * self.zc)
+        self.crossfade_frame = max(self.zc, int(round(self.crossfade_ms / 1000.0 * self.sample_rate / self.zc) * self.zc))
+
+        # Capped at 40 ms for optimal SOLA overlap stability
+        self.sola_buffer_frame = max(1, min(self.crossfade_frame, 4 * self.zc))
         self.effective_crossfade_ms = 1000.0 * self.sola_buffer_frame / self.sample_rate
         self.sola_search_frame = self.zc
-        self.extra_frame = int(round(self.extra_ms / 1000 * self.sample_rate / self.zc) * self.zc)
+        self.extra_frame = max(self.zc, int(round(self.extra_ms / 1000.0 * self.sample_rate / self.zc) * self.zc))
 
         self.config = Config()
         self.rvc = rtrvc.RVC(
@@ -144,7 +170,7 @@ class RVCStreamEngine:
         self.fade_in_window = torch.sin(
             0.5 * np.pi * torch.linspace(0.0, 1.0, steps=self.sola_buffer_frame, device=self.config.device)
         ) ** 2
-        self.fade_out_window = 1 - self.fade_in_window
+        self.fade_out_window = 1.0 - self.fade_in_window
         self.resampler = tat.Resample(orig_freq=self.sample_rate, new_freq=16000, dtype=torch.float32).to(self.config.device)
         self.resampler2 = None
         if self.rvc.tgt_sr != self.sample_rate:
@@ -155,9 +181,9 @@ class RVCStreamEngine:
 
     def prewarm(self) -> None:
         phase = self.torch.arange(self.block_frame, device=self.config.device, dtype=self.torch.float32)
-        probe = 0.05 * self.torch.sin(2 * self.np.pi * 220.0 * phase / self.sample_rate)
+        probe = 0.05 * self.torch.sin(2.0 * self.np.pi * 220.0 * phase / self.sample_rate)
         self.process(probe.cpu().numpy(), 12.0, 0.0, 0.0, 0.5, -60.0, 0)
-        if self.torch.device(self.config.device).type == "cuda":
+        if str(self.config.device).startswith("cuda") and self.torch.cuda.is_available():
             self.torch.cuda.synchronize(self.config.device)
 
         self.input_wav.zero_()
@@ -168,9 +194,18 @@ class RVCStreamEngine:
             self.rvc.cache_pitch.zero_()
         if hasattr(self.rvc, "cache_pitchf"):
             self.rvc.cache_pitchf.zero_()
+        clear_vram_safe()
 
-    def process(self, audio, pitch: float, formant: float, index_rate: float,
-                rms_mix: float, threshold: float, f0_method: int):
+    def process(
+        self,
+        audio,
+        pitch: float,
+        formant: float,
+        index_rate: float,
+        rms_mix: float,
+        threshold: float,
+        f0_method: int,
+    ):
         np = self.np
         torch = self.torch
         F = self.F
@@ -196,12 +231,12 @@ class RVCStreamEngine:
             below = self.librosa.amplitude_to_db(rms, ref=1.0)[0] < threshold
             for i, mute in enumerate(below):
                 if mute:
-                    gated[i * self.zc : (i + 1) * self.zc] = 0
+                    gated[i * self.zc : (i + 1) * self.zc] = 0.0
             indata = gated[self.zc // 2 :]
 
-        self.input_wav[:-self.block_frame] = self.input_wav[self.block_frame:].clone()
-        self.input_wav[-self.block_frame:] = torch.from_numpy(indata).to(self.config.device)
-        self.input_wav_res[:-self.block_frame_16k] = self.input_wav_res[self.block_frame_16k:].clone()
+        self.input_wav[: -self.block_frame] = self.input_wav[self.block_frame :].clone()
+        self.input_wav[-self.block_frame :] = torch.from_numpy(indata).to(self.config.device)
+        self.input_wav_res[: -self.block_frame_16k] = self.input_wav_res[self.block_frame_16k :].clone()
         resample_input = self.input_wav[-self.block_frame - 2 * self.zc :]
         resampled = self.run_cuda_graph(
             self.resampler,
@@ -209,7 +244,7 @@ class RVCStreamEngine:
             lambda value: self.resampler(value),
             resample_input,
         )[160:]
-        self.input_wav_res[-self.block_frame_16k:] = resampled[-self.block_frame_16k:]
+        self.input_wav_res[-self.block_frame_16k :] = resampled[-self.block_frame_16k :]
 
         method = ("rmvpe", "fcpe", "pm")[max(0, min(2, int(f0_method)))]
         infer_wav = self.rvc.infer(
@@ -227,10 +262,16 @@ class RVCStreamEngine:
                 infer_wav,
             )
 
+        # ป้องกันปัญหาขนาดเฟรมคลาดเคลื่อน (Frame Synchronization Safety)
+        required_frames = self.block_frame + self.sola_buffer_frame + self.sola_search_frame
+        if infer_wav.shape[0] < required_frames:
+            infer_wav = F.pad(infer_wav, (0, required_frames - infer_wav.shape[0]))
+
         if rms_mix < 1.0:
             input_tail = self.input_wav[self.extra_frame :]
+            crop_len = min(input_tail.shape[0], infer_wav.shape[0])
             rms1 = self.librosa.feature.rms(
-                y=input_tail[: infer_wav.shape[0]].cpu().numpy(), frame_length=4 * self.zc, hop_length=self.zc
+                y=input_tail[:crop_len].cpu().numpy(), frame_length=4 * self.zc, hop_length=self.zc
             )
             rms1 = torch.from_numpy(rms1).to(self.config.device)
             rms1 = F.interpolate(rms1.unsqueeze(0), size=infer_wav.shape[0] + 1, mode="linear", align_corners=True)[0, 0, :-1]
@@ -244,7 +285,7 @@ class RVCStreamEngine:
 
         conv_input = infer_wav[None, None, : self.sola_buffer_frame + self.sola_search_frame]
         cor_nom = F.conv1d(conv_input, self.sola_buffer[None, None, :])
-        cor_den = torch.sqrt(F.conv1d(conv_input**2, self.sola_den_kernel) + 1e-8)
+        cor_den = torch.sqrt(F.conv1d(conv_input ** 2, self.sola_den_kernel) + 1e-8)
         sola_offset = int(torch.argmax(cor_nom[0, 0] / cor_den[0, 0]))
         infer_wav = infer_wav[sola_offset:]
         infer_wav[: self.sola_buffer_frame] *= self.fade_in_window
@@ -263,15 +304,14 @@ def run(args: argparse.Namespace) -> int:
         response_event = WinEvent(args.response)
         if read_value(shared, 0, "I") != MAGIC or read_value(shared, 4, "I") != PROTOCOL_VERSION:
             raise RuntimeError("RVC VST protocol mismatch")
-        write_status(shared, STATUS_LOADING, "Loading Python and CUDA")
+        write_status(shared, STATUS_LOADING, "Loading Python and AI Engine / กำลังโหลดเอนจิน AI")
         with open(args.config, "r", encoding="utf-8") as handle:
             cfg = json.load(handle)
-        # RVC's Config parses process-wide CLI flags intended for its WebUI.
         sys.argv = [sys.argv[0]]
         engine = RVCStreamEngine(cfg)
-        write_status(shared, STATUS_LOADING, "Prewarming CUDA and F0")
+        write_status(shared, STATUS_LOADING, "Prewarming AI Model and F0 / กำลังอุ่นเครื่องโมเดล")
         engine.prewarm()
-        write_status(shared, STATUS_READY, f"Ready (actual CF {engine.effective_crossfade_ms:.0f} ms)")
+        write_status(shared, STATUS_READY, f"Ready / พร้อมใช้งาน (CF {engine.effective_crossfade_ms:.0f} ms)")
 
         import numpy as np
 
@@ -324,6 +364,7 @@ def run(args: argparse.Namespace) -> int:
             pass
         return 1
     finally:
+        clear_vram_safe()
         if request_event is not None:
             request_event.close()
         if response_event is not None:

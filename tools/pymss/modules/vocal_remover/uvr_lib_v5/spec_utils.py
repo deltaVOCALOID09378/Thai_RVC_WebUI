@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: spec_utils.py
+# Path: tools\pymss\modules\vocal_remover\uvr_lib_v5\spec_utils.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 import math
 import platform
 import traceback

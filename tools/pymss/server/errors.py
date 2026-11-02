@@ -1,3 +1,11 @@
+# ==============================================================================
+# File: errors.py
+# Path: tools\pymss\server\errors.py
+# Description: RVC WebUI Core Module / โมดูลระบบ RVC WebUI
+# Version: 1.1
+# Made And Checked By DELTA SYNTH & All Code Agentic AI Engine
+# [ Original by "RVC-Project" ]
+# ==============================================================================
 class APIError(Exception):
     """Structured HTTP API error used by the pymss server.
 

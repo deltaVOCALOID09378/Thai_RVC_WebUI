@@ -2,7 +2,7 @@
 # ==============================================================================
 # วัน/เดือน/ปี: 12/10/2569 | 12/10/2026
 # ชื่อไฟล์: utils.py
-# ลำดับเวอร์ชัน: 1.5
+# ลำดับเวอร์ชัน: 1.7
 # Made And Checked By DELTA SYNTH [ ปฎิภัทร วงศ์ใหญ่ ] & All Code Agentic AI Engine
 # Original by "RVC-Project"
 # ตำแหน่งที่วางไฟล์: infer/lib/train/utils.py
@@ -211,22 +211,54 @@ def get_hparams(init=True):
     args = parser.parse_args()
     name = args.experiment_dir
     experiment_dir = os.path.join("./logs", args.experiment_dir)
+    os.makedirs(experiment_dir, exist_ok=True)
     config_save_path = os.path.join(experiment_dir, "config.json")
 
+    # Sanitize version & sample_rate so index values ("0", "1", "2") or Hz ("40000") never fail
+    ver_str = str(args.version).lower().strip()
+    args.version = "v1" if ver_str in ("v1", "0") else "v2"
+
+    sr_str = str(args.sample_rate).lower().strip()
+    if sr_str in ("32k", "32000", "2"):
+        args.sample_rate = "32k"
+    elif sr_str in ("48k", "48000", "1"):
+        args.sample_rate = "48k"
+    else:
+        args.sample_rate = "40k"
+
+    builtin_defaults = {'v1/32k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 12800, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 32000, 'filter_length': 1024, 'hop_length': 320, 'win_length': 1024, 'n_mel_channels': 80, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [10, 4, 2, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [16, 16, 4, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}, 'v1/40k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 12800, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 40000, 'filter_length': 2048, 'hop_length': 400, 'win_length': 2048, 'n_mel_channels': 125, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [10, 10, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [16, 16, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}, 'v1/48k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 11520, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 48000, 'filter_length': 2048, 'hop_length': 480, 'win_length': 2048, 'n_mel_channels': 128, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [10, 6, 2, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [16, 16, 4, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}, 'v2/32k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 12800, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 32000, 'filter_length': 1024, 'hop_length': 320, 'win_length': 1024, 'n_mel_channels': 80, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [10, 8, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [20, 16, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}, 'v2/48k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 17280, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 48000, 'filter_length': 2048, 'hop_length': 480, 'win_length': 2048, 'n_mel_channels': 128, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [12, 10, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [24, 20, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}, 'v2/40k.json': {'train': {'log_interval': 200, 'seed': 1234, 'epochs': 20000, 'learning_rate': 0.0001, 'betas': [0.8, 0.99], 'eps': 1e-09, 'batch_size': 4, 'fp16_run': False, 'lr_decay': 0.999875, 'segment_size': 12800, 'init_lr_ratio': 1, 'warmup_epochs': 0, 'c_mel': 45, 'c_kl': 1.0}, 'data': {'max_wav_value': 32768.0, 'sampling_rate': 40000, 'filter_length': 2048, 'hop_length': 400, 'win_length': 2048, 'n_mel_channels': 125, 'mel_fmin': 0.0, 'mel_fmax': None}, 'model': {'inter_channels': 192, 'hidden_channels': 192, 'filter_channels': 768, 'n_heads': 2, 'n_layers': 6, 'kernel_size': 3, 'p_dropout': 0, 'resblock': '1', 'resblock_kernel_sizes': [3, 7, 11], 'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]], 'upsample_rates': [10, 10, 2, 2], 'upsample_initial_channel': 512, 'upsample_kernel_sizes': [16, 16, 4, 4], 'use_spectral_norm': False, 'gin_channels': 256, 'spk_embed_dim': 109}}}
+
     config = {}
-    try:
-        with open(config_save_path, "r", encoding="utf-8") as f:
-            config = json.load(f)
-    except Exception as e:
-        logger.error(f"🔴 [ERROR] ตรวจพบไฟล์ตั้งค่าเสียหาย (Config corrupted) {config_save_path}: {e}")
-        logger.warning(f"🟡 [WARNING] กำลังดึงค่าเริ่มต้นอัตโนมัติ (Falling back to default config)...")
-        default_cfg = f"v1/{args.sample_rate}.json" if args.version == "v1" or args.sample_rate == "40k" else f"v2/{args.sample_rate}.json"
+    if os.path.isfile(config_save_path) and os.path.getsize(config_save_path) > 32:
         try:
-            with open(os.path.join("configs", default_cfg), "r", encoding="utf-8") as f_def:
-                config = json.load(f_def)
-        except Exception as fallback_e:
-            logger.error(f"🔴 [FATAL] ไม่สามารถกู้คืนค่าเริ่มต้นได้ (Fallback failed): {fallback_e}")
-            sys.exit(1)
+            with open(config_save_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception as e:
+            logger.warning(f"🟡 [WARNING] ไฟล์ config.json เสียหาย กำลังซ่อมแซมอัตโนมัติ ({e})")
+
+    if not config:
+        default_cfg = f"v1/{args.sample_rate}.json" if (args.version == "v1" or args.sample_rate == "40k") else f"v2/{args.sample_rate}.json"
+        for cand in (
+            os.path.join("configs", "inuse", default_cfg),
+            os.path.join("configs", default_cfg),
+            os.path.join("configs", "v1", "40k.json"),
+        ):
+            if os.path.isfile(cand):
+                try:
+                    with open(cand, "r", encoding="utf-8") as f_def:
+                        config = json.load(f_def)
+                    break
+                except Exception:
+                    pass
+        if not config:
+            config = builtin_defaults.get(default_cfg, builtin_defaults["v1/40k.json"])
+        try:
+            with open(config_save_path, "w", encoding="utf-8") as f_out:
+                json.dump(config, f_out, ensure_ascii=False, indent=4, sort_keys=True)
+                f_out.write("\n")
+            logger.info(f"✅ สร้างไฟล์ตั้งค่าเริ่มต้นอัตโนมัติสำเร็จ (Auto-generated config): {config_save_path}")
+        except Exception as write_e:
+            logger.warning(f"Could not write {config_save_path}: {write_e}")
 
     hparams = HParams(**config)
     hparams.model_dir = hparams.experiment_dir = experiment_dir
@@ -237,14 +269,17 @@ def get_hparams(init=True):
     hparams.pretrainD = args.pretrainD
     hparams.version = args.version
     hparams.gpus = args.gpus
-    if not hasattr(hparams, "train"): hparams.train = HParams()
+    if not hasattr(hparams, "train"):
+        hparams.train = HParams()
     hparams.train.batch_size = args.batch_size
+    hparams.train.epochs = args.total_epoch
     hparams.sample_rate = args.sample_rate
     hparams.if_f0 = args.if_f0
     hparams.if_latest = args.if_latest
     hparams.save_every_weights = args.save_every_weights
     hparams.if_cache_data_in_gpu = args.if_cache_data_in_gpu
-    if not hasattr(hparams, "data"): hparams.data = HParams()
+    if not hasattr(hparams, "data"):
+        hparams.data = HParams()
     hparams.data.training_files = f"{experiment_dir}/filelist.txt"
     return hparams
 
