@@ -73,7 +73,7 @@ if "%CLEAN_OPT%"=="1" (
 if "%CLEAN_OPT%"=="2" (
     echo.
     echo [INFO] Starting Unified WebUI in DirectML Mode on Port 9378...
-    "%PYTHON_EXE%" "%~dp0Program.py" --pycmd "%PYTHON_EXE%" --port 9378 --dml
+    "%PYTHON_EXE%" "%~dp0WebUI.py" --pycmd "%PYTHON_EXE%" --port 9378 --dml
     pause
     goto :MAIN_MENU
 )
